@@ -1,0 +1,15 @@
+# /CGA-Arco-Consultoria/Dockerfile.dev
+
+# Dockerfile para desenvolvimento do Portal CGA com Vite
+FROM node:20-alpine
+
+WORKDIR /app
+
+COPY package*.json ./
+RUN npm install
+
+COPY . .
+
+# O Vite precisa ser exposto na rede do container para o Docker Compose acessar
+EXPOSE 5173
+CMD ["npm", "run", "dev", "--", "--host"]
