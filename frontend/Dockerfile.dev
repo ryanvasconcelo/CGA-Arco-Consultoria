@@ -1,6 +1,5 @@
-# /CGA-Arco-Consultoria/Dockerfile.dev
+# /CGA-Arco-Consultoria/frontend/Dockerfile.dev
 
-# Dockerfile para desenvolvimento do Portal CGA com Vite
 FROM node:20-alpine
 
 WORKDIR /app

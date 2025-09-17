@@ -1,0 +1,62 @@
+version: '3.8'
+
+services:
+  # Serviço do Backend
+  backend:
+    build:
+      context: ./backend # Informa ao Docker para procurar o Dockerfile na pasta ./backend
+      dockerfile: Dockerfile.dev
+    container_name: cga_backend_dev
+    ports:
+      - "3001:3001" # Mapeia a porta 3001 do container para a porta 3001 da sua máquina
+    volumes:
+      - ./backend:/app # Espelha a pasta local ./backend para a pasta /app dentro do container
+      - /app/node_modules
+    depends_on:
+      - postgres
+      - redis
+    environment:
+      - DATABASE_URL=postgresql://user:password@postgres:5432/arcodb?schema=public
+      - REDIS_URL=redis://redis:6379
+      - NODE_ENV=development
+
+  # Serviço do Frontend
+  frontend:
+    build:
+      context: ./frontend # Informa ao Docker para procurar o Dockerfile na pasta ./frontend
+      dockerfile: Dockerfile.dev
+    container_name: cga_frontend_dev
+    ports:
+      - "5173:5173" # Mapeia a porta 5173 do container para a porta 5173 da sua máquina
+    volumes:
+      - ./frontend:/app # Espelha a pasta local ./frontend para a pasta /app dentro do container
+      - /app/node_modules
+    environment:
+      - NODE_ENV=development
+
+  # Serviço do Banco de Dados
+  postgres:
+    image: postgres:16-alpine
+    container_name: postgres_db_dev
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data # Garante que os dados do banco persistam
+    environment:
+      - POSTGRES_USER=user
+      - POSTGRES_PASSWORD=password
+      - POSTGRES_DB=arcodb
+
+  # Serviço de Cache
+  redis:
+    image: redis:7-alpine
+    container_name: redis_cache_dev
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data # Garante que os dados do cache persistam
+
+# Declaração dos volumes para persistência de dados
+volumes:
+  postgres_data:
+  redis_data:
