@@ -1,62 +1,52 @@
+# ./docker-compose.yml
+
 version: '3.8'
 
 services:
-  # Serviço do Backend
-  backend:
-    build:
-      context: ./backend # Informa ao Docker para procurar o Dockerfile na pasta ./backend
-      dockerfile: Dockerfile.dev
-    container_name: cga_backend_dev
-    ports:
-      - "3001:3001" # Mapeia a porta 3001 do container para a porta 3001 da sua máquina
-    volumes:
-      - ./backend:/app # Espelha a pasta local ./backend para a pasta /app dentro do container
-      - /app/node_modules
-    depends_on:
-      - postgres
-      - redis
-    environment:
-      - DATABASE_URL=postgresql://user:password@postgres:5432/arcodb?schema=public
-      - REDIS_URL=redis://redis:6379
-      - NODE_ENV=development
-
-  # Serviço do Frontend
-  frontend:
-    build:
-      context: ./frontend # Informa ao Docker para procurar o Dockerfile na pasta ./frontend
-      dockerfile: Dockerfile.dev
-    container_name: cga_frontend_dev
-    ports:
-      - "5173:5173" # Mapeia a porta 5173 do container para a porta 5173 da sua máquina
-    volumes:
-      - ./frontend:/app # Espelha a pasta local ./frontend para a pasta /app dentro do container
-      - /app/node_modules
-    environment:
-      - NODE_ENV=development
-
-  # Serviço do Banco de Dados
+  # Serviço do Banco de Dados PostgreSQL
   postgres:
     image: postgres:16-alpine
-    container_name: postgres_db_dev
+    container_name: cga_postgres_db
+    environment:
+      POSTGRES_USER: ${DB_USER}
+      POSTGRES_PASSWORD: ${DB_PASSWORD}
+      POSTGRES_DB: ${DB_NAME}
     ports:
       - "5432:5432"
     volumes:
-      - postgres_data:/var/lib/postgresql/data # Garante que os dados do banco persistam
-    environment:
-      - POSTGRES_USER=user
-      - POSTGRES_PASSWORD=password
-      - POSTGRES_DB=arcodb
+      - cga_postgres_data:/var/lib/postgresql/data
+    restart: unless-stopped
 
-  # Serviço de Cache
-  redis:
-    image: redis:7-alpine
-    container_name: redis_cache_dev
+  # Serviço do Backend (Node.js/Express/Prisma)
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile.dev # Usaremos um Dockerfile específico para desenvolvimento
+    container_name: cga_backend_api
     ports:
-      - "6379:6379"
+      - "3333:3333" # Porta da API
     volumes:
-      - redis_data:/data # Garante que os dados do cache persistam
+      - ./backend:/usr/app
+      - /usr/app/node_modules # Evita que o node_modules local sobrescreva o do container
+    depends_on:
+      - postgres
+    environment:
+      DATABASE_URL: ${DATABASE_URL}
+      # Outras variáveis de ambiente (JWT_SECRET, etc)
+    restart: unless-stopped
 
-# Declaração dos volumes para persistência de dados
+  # Serviço do Frontend (React/Vite)
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile.dev
+    container_name: cga_frontend_app
+    ports:
+      - "5173:5173" # Porta padrão do Vite
+    volumes:
+      - ./frontend:/usr/app
+      - /usr/app/node_modules
+    restart: unless-stopped
+
 volumes:
-  postgres_data:
-  redis_data:
+  cga_postgres_data:
