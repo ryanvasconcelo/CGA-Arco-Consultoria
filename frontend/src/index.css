@@ -21,6 +21,11 @@
     --primary-foreground: 220 15% 15%;
     --primary-hover: 45 95% 45%;
     --primary-light: 45 95% 85%;
+    --primary-glow: 45 95% 60%;
+
+    /* Status Colors */
+    --success: 142 76% 36%;
+    --success-foreground: 355 100% 97%;
 
     /* CGA Secondary - Navy/Corporate */
     --secondary: 220 15% 15%;
@@ -136,6 +141,22 @@
     background: var(--gradient-glass);
     backdrop-filter: blur(20px);
     border: 1px solid rgba(255, 255, 255, 0.2);
+  }
+
+  .glass-card {
+    @apply bg-background/50 backdrop-blur-md border-white/10;
+  }
+  
+  .glass-input {
+    @apply bg-background/30 backdrop-blur-sm border-white/20 focus:border-primary/50;
+  }
+  
+  .gradient-primary {
+    @apply bg-gradient-to-r from-primary to-primary-hover text-white;
+  }
+  
+  .hover-lift {
+    @apply transition-transform duration-200 hover:scale-105;
   }
 
   /* Corporate Card Styles */

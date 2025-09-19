@@ -19,8 +19,11 @@ const Header = () => {
 
           {/* Navigation */}
           <nav className="hidden md:flex items-center space-x-8">
-            <a href="#" className="text-foreground hover:text-primary transition-colors font-medium">
+            <a href="/" className="text-foreground hover:text-primary transition-colors font-medium">
               INÍCIO
+            </a>
+            <a href="/admin/users" className="text-foreground hover:text-primary transition-colors font-medium">
+              USUÁRIOS
             </a>
             <a href="#" className="text-foreground hover:text-primary transition-colors font-medium">
               CATÁLOGO DE SOLUÇÕES
@@ -28,7 +31,7 @@ const Header = () => {
             <a href="#" className="text-foreground hover:text-primary transition-colors font-medium">
               CANAL DE DENÚNCIAS
             </a>
-            <a href="#" className="text-foreground hover:text-primary transition-colors font-medium">
+            <a href="/contato" className="text-foreground hover:text-primary transition-colors font-medium">
               FALE CONOSCO
             </a>
           </nav>
