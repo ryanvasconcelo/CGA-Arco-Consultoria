@@ -1,6 +1,7 @@
 import { Search, User, Menu } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { UserProfileCard } from "@/components/UserProfileCard";
 
 const Header = () => {
   return (
@@ -25,10 +26,10 @@ const Header = () => {
             <a href="/admin/users" className="text-foreground hover:text-primary transition-colors font-medium">
               USUÁRIOS
             </a>
-            <a href="#" className="text-foreground hover:text-primary transition-colors font-medium">
+            <a href="/catalogo-solucoes" className="text-foreground hover:text-primary transition-colors font-medium">
               CATÁLOGO DE SOLUÇÕES
             </a>
-            <a href="#" className="text-foreground hover:text-primary transition-colors font-medium">
+            <a href="/canal-denuncias" className="text-foreground hover:text-primary transition-colors font-medium">
               CANAL DE DENÚNCIAS
             </a>
             <a href="/contato" className="text-foreground hover:text-primary transition-colors font-medium">
@@ -45,10 +46,18 @@ const Header = () => {
                 className="pl-10 w-64 bg-muted border-border"
               />
             </div>
-            <Button variant="default" size="sm" className="btn-primary">
-              <User className="h-4 w-4 mr-2" />
-              Sair
-            </Button>
+            <UserProfileCard 
+              user={{
+                name: "João Silva",
+                email: "joao.silva@empresa.com",
+                role: "ADMIN",
+                company: "Porto Chibatão S.A."
+              }}
+              onLogout={() => {
+                // Handle logout
+                console.log("Logout clicked");
+              }}
+            />
             <Button variant="ghost" size="sm" className="md:hidden">
               <Menu className="h-5 w-5" />
             </Button>

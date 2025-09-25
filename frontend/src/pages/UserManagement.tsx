@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Search, Plus, Filter, MoreHorizontal, Eye, Edit2, Trash2, UserPlus } from "lucide-react";
+import { Search, Plus, Filter, MoreHorizontal, Eye, Edit2, Trash2, UserPlus, Building2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -18,8 +18,8 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { UserForm } from "@/components/UserForm";
-import Header from "@/components/Header";
+import { EnhancedUserForm } from "../components/UserForm";
+import Header from "../components/Header";
 
 // Mock data para demonstração
 const mockUsers = [
@@ -77,10 +77,10 @@ export default function UserManagement() {
 
   const filteredUsers = users.filter(user => {
     const matchesSearch = user.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                         user.email.toLowerCase().includes(searchTerm.toLowerCase());
+      user.email.toLowerCase().includes(searchTerm.toLowerCase());
     const matchesRole = roleFilter === "all" || user.role === roleFilter;
     const matchesStatus = statusFilter === "all" || user.status === statusFilter;
-    
+
     return matchesSearch && matchesRole && matchesStatus;
   });
 
@@ -95,15 +95,15 @@ export default function UserManagement() {
   };
 
   const handleToggleStatus = (userId: string) => {
-    setUsers(prev => prev.map(user => 
-      user.id === userId 
+    setUsers(prev => prev.map(user =>
+      user.id === userId
         ? { ...user, status: user.status === "active" ? "inactive" : "active" }
         : user
     ));
   };
 
   const getStatusBadge = (status: string) => {
-    return status === "active" 
+    return status === "active"
       ? <Badge className="bg-success/20 text-success border-success/30">Ativo</Badge>
       : <Badge className="bg-destructive/20 text-destructive border-destructive/30">Inativo</Badge>;
   };
@@ -111,7 +111,7 @@ export default function UserManagement() {
   return (
     <div className="min-h-screen bg-gradient-to-br from-primary/5 via-background to-secondary/5">
       <Header />
-      
+
       <main className="container mx-auto px-6 py-8">
         {/* Header Section */}
         <div className="glass-card rounded-xl p-6 mb-8 border border-white/10">
@@ -124,10 +124,20 @@ export default function UserManagement() {
                 Gerencie usuários da sua empresa com controle total de permissões
               </p>
             </div>
-            <Button onClick={handleAddUser} className="gradient-primary hover-lift">
-              <UserPlus className="mr-2 h-4 w-4" />
-              Novo Usuário
-            </Button>
+            <div className="flex gap-3">
+              <Button
+                onClick={() => window.location.href = '/admin/companies'}
+                variant="outline"
+                className="hover-lift"
+              >
+                <Building2 className="mr-2 h-4 w-4" />
+                Gerenciar Empresas
+              </Button>
+              <Button onClick={handleAddUser} className="gradient-primary hover-lift">
+                <UserPlus className="mr-2 h-4 w-4" />
+                Novo Usuário
+              </Button>
+            </div>
           </div>
         </div>
 
@@ -149,7 +159,7 @@ export default function UserManagement() {
                   />
                 </div>
               </div>
-              
+
               <select
                 value={roleFilter}
                 onChange={(e) => setRoleFilter(e.target.value)}
@@ -159,7 +169,7 @@ export default function UserManagement() {
                 <option value="ADMIN">Administrador</option>
                 <option value="MEMBER">Usuário</option>
               </select>
-              
+
               <select
                 value={statusFilter}
                 onChange={(e) => setStatusFilter(e.target.value)}
@@ -252,13 +262,14 @@ export default function UserManagement() {
         </Card>
       </main>
 
-      {/* User Form Modal */}
+      {/* Enhanced User Form Modal */}
       {isUserFormOpen && (
-        <UserForm
+        <EnhancedUserForm
           user={selectedUser}
+          currentUserRole="ADMIN"
+          userCompany="Porto Chibatão S.A."
           onClose={() => setIsUserFormOpen(false)}
           onSubmit={(userData) => {
-            // Aqui seria feita a integração com o backend
             console.log("User data:", userData);
             setIsUserFormOpen(false);
           }}

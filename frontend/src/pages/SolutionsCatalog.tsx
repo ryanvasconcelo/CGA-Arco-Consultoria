@@ -1,0 +1,185 @@
+import Header from "@/components/Header";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { ArrowRight, Shield, BarChart3, Eye, CheckSquare, GraduationCap, Waves } from "lucide-react";
+import acciaLogo from "@/assets/accia-logo.png";
+import arcoPortusLogo from "@/assets/arco-portus-logo.png";
+import arcoViewLogo from "@/assets/arcoview-controll.png";
+import guardControlLogo from "@/assets/guardcontroll-logo.png";
+import unicaspLogo from "@/assets/unicasp-logo.png";
+import arcoMokiLogo from "@/assets/checklist-facil-logo.jpg";
+
+const SolutionsCatalog = () => {
+  const solutions = [
+    {
+      id: "accia",
+      name: "Accia",
+      logo: acciaLogo,
+      icon: Shield,
+      description: "Plataforma de gestão de segurança corporativa com análise de riscos e compliance regulatório.",
+      features: ["Gestão de Riscos", "Compliance", "Auditoria", "Relatórios"],
+      color: "from-blue-500 to-cyan-500"
+    },
+    {
+      id: "arco-portus",
+      name: "Arco Portus",
+      logo: arcoPortusLogo,
+      icon: Waves,
+      description: "Sistema integrado de controle portuário e gestão logística marítima.",
+      features: ["Controle Portuário", "Logística", "Rastreamento", "Integração"],
+      color: "from-amber-500 to-orange-500"
+    },
+    {
+      id: "arco-view",
+      name: "Arco View",
+      logo: arcoViewLogo,
+      icon: Eye,
+      description: "Solução de monitoramento e análise visual para segurança corporativa.",
+      features: ["Monitoramento", "Análise Visual", "Alertas", "Dashboard"],
+      color: "from-green-500 to-emerald-500"
+    },
+    {
+      id: "guard-control",
+      name: "Guard Control",
+      logo: guardControlLogo,
+      icon: Shield,
+      description: "Tecnologia avançada para controle de acesso e segurança patrimonial.",
+      features: ["Controle de Acesso", "Segurança", "Monitoramento", "Relatórios"],
+      color: "from-blue-600 to-indigo-600"
+    },
+    {
+      id: "unicasp",
+      name: "Unicasp",
+      logo: unicaspLogo,
+      icon: GraduationCap,
+      description: "Universidade corporativa com cursos e treinamentos especializados em segurança.",
+      features: ["Cursos Online", "Certificações", "Treinamentos", "Avaliações"],
+      color: "from-purple-500 to-violet-500"
+    },
+    {
+      id: "arco-moki",
+      name: "Arco Moki",
+      logo: arcoMokiLogo,
+      icon: CheckSquare,
+      description: "Checklist digital inteligente para padronização de processos e conformidade.",
+      features: ["Checklists Digitais", "Processos", "Conformidade", "Automação"],
+      color: "from-green-600 to-teal-600"
+    }
+  ];
+
+  return (
+    <div className="min-h-screen bg-gradient-to-br from-primary/5 via-background to-secondary/5">
+      <Header />
+      {/* Hero Section */}
+      <section className="py-20 px-4">
+        <div className="container mx-auto text-center">
+          <h1 className="text-5xl lg:text-6xl font-bold text-foreground mb-6">
+            Catálogo de <span className="text-secondary">Soluções</span>
+          </h1>
+          <p className="text-xl text-muted-foreground max-w-3xl mx-auto mb-8">
+            Conheça nossas soluções integradas de gestão corporativa, desenvolvidas para atender
+            cada necessidade específica do seu negócio com tecnologia de ponta.
+          </p>
+          <div className="flex items-center justify-center space-x-4">
+            <div className="text-3xl font-bold">
+              <span className="text-foreground">CGA</span>
+            </div>
+            <div className="text-sm text-muted-foreground">
+              CENTRAL DE GESTÃO ARCO
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* Solutions Grid */}
+      <section className="py-16 px-4">
+        <div className="container mx-auto">
+          <div className="grid md:grid-cols-2 xl:grid-cols-3 gap-8">
+            {solutions.map((solution) => {
+              const IconComponent = solution.icon;
+              return (
+                <Card key={solution.id} className="glass-card group hover-scale overflow-hidden">
+                  <div className={`h-2 bg-gradient-to-r ${solution.color}`}></div>
+
+                  <CardHeader className="text-center pb-4">
+                    <div className="w-24 h-24 mx-auto mb-4 p-4 bg-white rounded-lg shadow-md flex items-center justify-center">
+                      <img
+                        src={solution.logo}
+                        alt={solution.name}
+                        className="max-w-full max-h-full object-contain"
+                      />
+                    </div>
+                    <CardTitle className="text-xl font-bold text-foreground">
+                      {solution.name}
+                    </CardTitle>
+                  </CardHeader>
+
+                  <CardContent className="space-y-6">
+                    <p className="text-muted-foreground text-center leading-relaxed">
+                      {solution.description}
+                    </p>
+
+                    <div className="space-y-3">
+                      <h4 className="font-semibold text-foreground flex items-center">
+                        <IconComponent className="h-4 w-4 mr-2 text-primary" />
+                        Principais Recursos
+                      </h4>
+                      <ul className="space-y-1">
+                        {solution.features.map((feature, index) => (
+                          <li key={index} className="text-sm text-muted-foreground flex items-center">
+                            <div className="w-1.5 h-1.5 rounded-full bg-primary mr-2"></div>
+                            {feature}
+                          </li>
+                        ))}
+                      </ul>
+                    </div>
+
+                    <Button className="w-full btn-primary group-hover:scale-105 transition-transform">
+                      Saiba Mais
+                      <ArrowRight className="h-4 w-4 ml-2" />
+                    </Button>
+                  </CardContent>
+                </Card>
+              );
+            })}
+          </div>
+        </div>
+      </section>
+
+      {/* CTA Section */}
+      <section className="py-20 px-4">
+        <div className="container mx-auto text-center">
+          <Card className="glass-card max-w-4xl mx-auto">
+            <CardContent className="p-12">
+              <h2 className="text-3xl font-bold text-foreground mb-6">
+                Pronto para transformar sua gestão corporativa?
+              </h2>
+              <p className="text-lg text-muted-foreground mb-8 max-w-2xl mx-auto">
+                Entre em contato conosco e descubra como nossas soluções podem
+                otimizar seus processos e aumentar a segurança da sua empresa.
+              </p>
+              <div className="flex flex-col sm:flex-row gap-4 justify-center">
+                <Button size="lg" className="btn-primary">
+                  Falar com Especialista
+                  <ArrowRight className="h-5 w-5 ml-2" />
+                </Button>
+                <Button size="lg" variant="outline" className="border-primary text-primary hover:bg-primary hover:text-primary-foreground">
+                  Ver Demonstração
+                </Button>
+              </div>
+            </CardContent>
+          </Card>
+        </div>
+      </section>
+
+      {/* Footer */}
+      <footer className="py-8 text-center text-sm text-muted-foreground border-t border-border/50">
+        <div className="container mx-auto">
+          © 2023 Arco Consultoria em Segurança - Todos os direitos reservados.
+        </div>
+      </footer>
+    </div>
+  );
+};
+
+export default SolutionsCatalog;
