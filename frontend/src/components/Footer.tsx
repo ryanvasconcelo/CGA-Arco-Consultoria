@@ -1,4 +1,4 @@
-import logoArco from "@/assets/logoArco.png";
+import logoArco from "@/assets/Arco-Solutions-bgwhite.svg";
 
 const ArcoPortusFooter = () => {
   return (

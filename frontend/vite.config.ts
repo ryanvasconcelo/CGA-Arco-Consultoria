@@ -1,23 +1,16 @@
-import path from "path"
-import react from "@vitejs/plugin-react"
-import { defineConfig } from "vite"
-// const { lovableTagger } = require("lovable-tagger");
+import { defineConfig } from 'vite'
+import react from '@vitejs/plugin-react'
+import path from 'path'
 
 export default defineConfig({
-  plugins: [
-    // lovableTagger(),
-    react()
-  ],
+  plugins: [react()], // Usa o plugin React padrão (Babel) ao invés do SWC
   resolve: {
     alias: {
       "@": path.resolve(__dirname, "./src"),
     },
   },
   server: {
-    host: true,
+    host: '0.0.0.0',
     port: 5173,
-    watch: {
-      usePolling: true,
-    },
   },
 })

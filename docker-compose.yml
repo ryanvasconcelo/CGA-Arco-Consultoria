@@ -26,7 +26,7 @@ services:
       - "3333:3333"
       - "5555:5555" # Prisma Studio
     volumes:
-      - ./backend:/app # Mapeamos para /app, um nome mais padrão
+      - ./backend:/app
       - /app/node_modules
     depends_on:
       cga_db:
@@ -34,21 +34,24 @@ services:
     environment:
       DATABASE_URL: ${DATABASE_URL}
       JWT_SECRET: ${JWT_SECRET}
-      PORT: 3333 # Definindo a porta via variável de ambiente
+      PORT: 3333
     restart: unless-stopped
     command: sh -c "npm install && npx prisma migrate deploy && npx prisma generate && npm run dev"
 
   frontend:
-    # ... (o serviço de frontend continua o mesmo)
     image: node:20-alpine
     container_name: cga_frontend
     working_dir: /app
-    volumes:
-      - ./frontend:/app
     ports:
       - "5173:5173"
-    command: sh -c "npm install --legacy-peer-deps && npm run dev"
+    volumes:
+      - ./frontend:/app
+      - /app/node_modules # Isola o node_modules para evitar conflitos
     restart: unless-stopped
+    command: sh -c "npm install --legacy-peer-deps && npm run dev"
 
+# --- DECLARAÇÃO DE VOLUMES ---
+# ESTE BLOCO É CRUCIAL E DEVE TER INDENTAÇÃO ZERO.
+# ELE PRECISA ESTAR NO MESMO NÍVEL DE 'services'.
 volumes:
   cga_postgres_data:

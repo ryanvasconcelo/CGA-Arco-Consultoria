@@ -9,11 +9,16 @@ import sessionRouter from './routes/session.routes';
 import companyRouter from './routes/company.routes';
 import productRouter from './routes/product.routes';
 import userRouter from './routes/user.routes';
+import passwordRouter from './routes/password.routes';
+import cors from 'cors';
 
 const app = express();
+
+app.use(cors());
 app.use(express.json());
 
 app.use('/sessions', sessionRouter);
+app.use('/password', passwordRouter);
 
 const apiRouter = express.Router();
 apiRouter.use(authMiddleware);

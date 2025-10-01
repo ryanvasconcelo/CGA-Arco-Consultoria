@@ -1,5 +1,5 @@
-import ArcoPortusHeader from "@/components/arco-portus/Header";
-import ArcoPortusFooter from "@/components/arco-portus/Footer";
+import ArcoPortusHeader from "@/components/Header";
+import ArcoPortusFooter from "@/components/Footer";
 import { Card, CardContent } from "@/components/ui/card";
 
 const PoliticaCookies = () => {

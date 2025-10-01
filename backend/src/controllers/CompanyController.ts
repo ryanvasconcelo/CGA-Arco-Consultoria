@@ -7,15 +7,82 @@ const prisma = new PrismaClient();
 class CompanyController {
     // Listar todas as empresas (só para SUPER_ADMIN)
     public async index(req: Request, res: Response): Promise<Response> {
-        const companies = await prisma.company.findMany();
-        return res.json(companies);
+        const authenticatedUser = req.user;
+
+        // Se o usuário for SUPER_ADMIN...
+        if (authenticatedUser?.role === 'SUPER_ADMIN') {
+            const companies = await prisma.company.findMany({
+                orderBy: { name: 'asc' },
+                // --- ADICIONE ESTE BLOCO ---
+                include: {
+                    products: true,
+                }
+            });
+            return res.json(companies);
+        }
+
+        // Se o usuário for ADMIN...
+        if (authenticatedUser?.role === 'ADMIN') {
+            const companies = await prisma.company.findMany({
+                where: { id: authenticatedUser.companyId },
+                // --- E ADICIONE ESTE BLOCO AQUI TAMBÉM ---
+                include: {
+                    products: true,
+                }
+            });
+            return res.json(companies);
+        }
+
+        // REGRA 3: Se não for nenhum dos dois, o acesso é negado.
+        // (Essa é uma segurança extra, pois o checkRole na rota já deveria ter barrado)
+        return res.status(403).json({ error: 'Acesso negado. Permissões insuficientes.' });
     }
 
     // Criar uma nova empresa (só para SUPER_ADMIN)
+    // backend/src/controllers/CompanyController.ts
+
     public async create(req: Request, res: Response): Promise<Response> {
-        const { name } = req.body;
-        const company = await prisma.company.create({ data: { name } });
-        return res.status(201).json(company);
+        const { name, cnpj, customColors, services } = req.body;
+        const logoUrl = req.file ? req.file.path : null;
+
+        // Precisamos garantir que os serviços venham como um array de IDs
+        let serviceIds: string[] = [];
+        if (services) {
+            try {
+                serviceIds = JSON.parse(services);
+            } catch (error) {
+                return res.status(400).json({ error: "O campo 'services' não é um array JSON válido." });
+            }
+        }
+
+        try {
+            const company = await prisma.company.create({
+                data: {
+                    name,
+                    cnpj,
+                    logoUrl,
+                    primaryColor: JSON.parse(customColors),
+                    // --- A MÁGICA ACONTECE AQUI ---
+                    // Prisma permite criar registros em tabelas relacionadas ao mesmo tempo.
+                    products: {
+                        create: serviceIds.map((productId) => ({
+                            product: {
+                                connect: { id: productId },
+                            },
+                        })),
+                    },
+                },
+                include: {
+                    products: true, // Opcional: retorna a empresa com os produtos associados
+                }
+            });
+
+            return res.status(201).json(company);
+
+        } catch (error) {
+            console.error("Erro no CompanyController ao criar:", error);
+            return res.status(500).json({ error: "Falha ao criar a empresa." });
+        }
     }
 
     // Ver uma empresa específica

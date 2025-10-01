@@ -1,6 +1,3 @@
-// This is your Prisma schema file,
-// learn more about it in the docs: https://pris.ly/d/prisma-schema
-
 generator client {
   provider      = "prisma-client-js"
   binaryTargets = ["native", "linux-musl-arm64-openssl-3.0.x"]
@@ -11,36 +8,47 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
-model Company {
-  id        String   @id @default(uuid())
-  name      String   @unique // Adicionado unique para o seed funcionar
-  
-  // CAMPOS DE CUSTOMIZAÇÃO ADICIONADOS
-  logoUrl      String? // O '?' indica que o campo é opcional
-  primaryColor String? @default("#007bff") // Podemos ter uma cor padrão
+// -----------------------------------------------------
 
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+model Company {
+  id           String   @id @default(uuid())
+  name         String   @unique
+  cnpj         String?   @unique
+  logoUrl      String?
+  primaryColor String?  @default("#007bff")
+  secondaryColor String?  @default("#1f2937") // <-- ADICIONE ESTA LINHA
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
 
   users    User[]
-  products CompanyProduct[] // Renomeado de 'product' para 'products' (mais semântico)
+  products CompanyProduct[]
+   auditLogs AuditLog[]
 
   @@map("companies")
 }
 
 model User {
   id        String   @id @default(uuid())
-  name      String   // <-- CAMPO DE NOME ADICIONADO
+  name      String
   email     String   @unique
   password  String
   role      Role     @default(USER)
+  status    Status   @default(ACTIVE)
+  passwordResetRequired Boolean  @default(true) // <-- CAMPO ADICIONADO
+
+  // CAMPOS PARA RESET DE SENHA
+  passwordResetToken    String?   @unique // O '?' o torna opcional
+  passwordResetExpires  DateTime? // O '?' o torna opcional
+
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
   companyId String
-  company   Company @relation(fields: [companyId], references: [id])
+  company   Company  @relation(fields: [companyId], references: [id])
 
-  userProducts UserProduct[] // Renomeado de 'product' para 'userProducts' (mais claro)
+  userProducts UserProduct[]
+  permissions  UserPermission[]
+   auditLogs AuditLog[]
 
   @@map("users")
 }
@@ -57,14 +65,53 @@ model Product {
   @@map("products")
 }
 
-// Tabela Pivot: Quais serviços uma empresa assinou
+// Tabela para as permissões granulares do Arco Portus
+model Permission {
+  id     String @id @default(uuid())
+  action String // Ex: "CREATE", "READ", "UPDATE", "DELETE"
+  subject String // Ex: "DOCUMENT", "REPORT", "USER"
+  
+  users UserPermission[]
+
+  @@unique([action, subject]) // Garante que não haja permissões duplicadas
+  @@map("permissions")
+}
+
+model AuditLog {
+  id        String      @id @default(uuid())
+  action    AuditAction
+  details   Json?
+  
+  authorId  String
+  author    User        @relation(fields: [authorId], references: [id])
+  
+  companyId String
+  company   Company     @relation(fields: [companyId], references: [id])
+
+  createdAt DateTime    @default(now())
+
+  @@map("audit_logs")
+}
+
+// Tabela Pivot: Conecta Usuários a Permissões
+model UserPermission {
+  id           String @id @default(uuid())
+  userId       String
+  permissionId String
+
+  user       User       @relation(fields: [userId], references: [id])
+  permission Permission @relation(fields: [permissionId], references: [id])
+
+  @@unique([userId, permissionId])
+  @@map("user_permissions")
+}
+
+
+// --- TABELAS PIVOT ANTIGAS ---
 model CompanyProduct {
   id        String @id @default(uuid())
   companyId String
   productId String
-
-  // Aqui podemos adicionar as configurações de personalização
-  // settings  Json?
 
   company Company @relation(fields: [companyId], references: [id])
   product Product @relation(fields: [productId], references: [id])
@@ -75,7 +122,6 @@ model CompanyProduct {
   @@map("company_products")
 }
 
-// Tabela Pivot: A qual serviço um usuário tem acesso
 model UserProduct {
   id               String @id @default(uuid())
   userId           String
@@ -84,15 +130,38 @@ model UserProduct {
   user           User           @relation(fields: [userId], references: [id])
   companyProduct CompanyProduct @relation(fields: [companyProductId], references: [id])
 
-  // Aqui podemos adicionar permissões mais granulares no futuro
-  // permissions Json?
-
   @@unique([userId, companyProductId])
   @@map("user_products")
 }
 
+// --- ENUMS ---
 enum Role {
   SUPER_ADMIN
   ADMIN
   USER
+}
+
+enum Status {
+  ACTIVE
+  INACTIVE
+}
+
+enum AuditAction {
+  // Ações de Usuário
+  CREATE_USER
+  UPDATE_USER
+  DELETE_USER
+  
+  // Ações de Empresa
+  CREATE_COMPANY
+  UPDATE_COMPANY
+  DELETE_COMPANY
+
+  // Ações de Relação
+  ASSOCIATE_PRODUCT_TO_COMPANY
+  DISASSOCIATE_PRODUCT_FROM_COMPANY
+  ASSOCIATE_USER_TO_PRODUCT
+  DISASSOCIATE_USER_FROM_PRODUCT
+  ASSOCIATE_USER_TO_PERMISSION
+  DISASSOCIATE_USER_FROM_PERMISSION
 }

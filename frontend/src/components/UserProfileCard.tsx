@@ -58,7 +58,7 @@ export function UserProfileCard({ user, onLogout }: UserProfileCardProps) {
           </div>
         </Button>
       </DropdownMenuTrigger>
-      
+
       <DropdownMenuContent align="end" className="w-64 glass-card border-white/10">
         <div className="p-4 space-y-3">
           <div className="flex items-center gap-3">
@@ -78,21 +78,21 @@ export function UserProfileCard({ user, onLogout }: UserProfileCardProps) {
               <div className="text-sm text-muted-foreground truncate">{user.email}</div>
             </div>
           </div>
-          
+
           <div className="flex items-center gap-2">
             <Building2 className="h-4 w-4 text-muted-foreground" />
             <span className="text-sm">{user.company}</span>
           </div>
-          
+
           <div className="flex items-center gap-2">
             <Badge className={`${roleColors[user.role as keyof typeof roleColors]} text-white border-0 text-xs`}>
               {roleLabels[user.role as keyof typeof roleLabels]}
             </Badge>
           </div>
         </div>
-        
+
         <DropdownMenuSeparator />
-        
+
         <DropdownMenuItem onClick={onLogout} className="text-destructive">
           <LogOut className="mr-2 h-4 w-4" />
           Sair
