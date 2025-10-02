@@ -1,22 +1,47 @@
 // frontend/src/services/userService.ts
 import { api } from '@/lib/api';
 
+// --- INTERFACE ATUALIZADA ---
 export interface User {
     id: string;
     name: string;
     email: string;
     role: string;
     status: string;
-    company: {
-        name: string;
-    };
     createdAt: string;
+    company: {
+        id: string;
+        name: string;
+        products: {
+            product: {
+                id: string;
+                name: string;
+            }
+        }[];
+    };
+    userProducts: {
+        companyProduct: {
+            productId: string;
+        }
+    }[];
+    permissions: {
+        permission: {
+            action: string;
+            subject: string;
+        }
+    }[];
 }
 
 // --- FUNÇÃO DE LEITURA ---
-export const fetchUsers = async (): Promise<User[]> => {
+export const fetchUsers = async (page: number, pageSize: number, companyId?: string): Promise<{ data: User[], totalCount: number }> => {
     try {
-        const response = await api.get('/users');
+        const params: any = { page, pageSize };
+        if (companyId) {
+            params.companyId = companyId;
+        }
+        const response = await api.get('/users', {
+            params
+        });
         return response.data;
     } catch (error) {
         console.error('Erro ao buscar usuários:', error);
@@ -47,4 +72,13 @@ export const updateUser = async ({ id, data }: { id: string, data: any }) => {
     }
 };
 
-// Futuramente, a função de deletar virá aqui.
+// --- FUNÇÃO DE DELEÇÃO (NOVA) ---
+export const deleteUser = async (id: string): Promise<void> => {
+    try {
+        // Faz uma requisição DELETE para o endpoint /users/:id
+        await api.delete(`/users/${id}`);
+    } catch (error) {
+        console.error(`Erro ao remover usuário ${id}:`, error);
+        throw error; // Lança o erro para o React Query capturar
+    }
+};

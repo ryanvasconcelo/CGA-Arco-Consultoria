@@ -61,13 +61,15 @@ async function main() {
 
     // --- ETAPA 2: Limpar dados de teste antigos ---
     // A ordem é importante para evitar erros de chave estrangeira
+    await prisma.userPermission.deleteMany({}); // <-- ADICIONE ESTA LINHA
+    await prisma.userProduct.deleteMany({});
     await prisma.companyProduct.deleteMany({});
     await prisma.user.deleteMany({});
     await prisma.company.deleteMany({});
-    console.log('Tabelas de User, Company e CompanyProduct limpas.');
+    console.log('Tabelas de dependência (UserPermission, UserProduct, CompanyProduct) e principais (User, Company) limpas.');
 
     // --- ETAPA 3: Criar Empresas e Usuários de Teste ---
-    const defaultPassword = await bcrypt.hash('123456', 8);
+    const defaultPassword = await bcrypt.hash('123456', 10);
     console.log('Senha padrão criada.');
 
     // Criar empresa do sistema para o Super Admin (nosso contorno)
@@ -97,6 +99,7 @@ async function main() {
             email: 'superadmin@arco.com',
             password: defaultPassword,
             role: 'SUPER_ADMIN',
+            passwordResetRequired: false, // Super admin não precisa resetar a senha
             companyId: systemCompany.id,
         },
     });
@@ -107,6 +110,7 @@ async function main() {
             email: 'admin@pato.com',
             password: defaultPassword,
             role: 'ADMIN',
+            passwordResetRequired: false, // Admin de teste não precisa resetar a senha
             companyId: patosCompany.id,
         },
     });

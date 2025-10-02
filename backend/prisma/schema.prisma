@@ -44,7 +44,7 @@ model User {
   updatedAt DateTime @updatedAt
 
   companyId String
-  company   Company  @relation(fields: [companyId], references: [id])
+  company   Company? @relation(fields: [companyId], references: [id], onDelete: Cascade)
 
   userProducts UserProduct[]
   permissions  UserPermission[]
@@ -82,11 +82,11 @@ model AuditLog {
   action    AuditAction
   details   Json?
   
-  authorId  String
-  author    User        @relation(fields: [authorId], references: [id])
+  authorId  String?
+  author    User?       @relation(fields: [authorId], references: [id], onDelete: SetNull)
   
-  companyId String
-  company   Company     @relation(fields: [companyId], references: [id])
+  companyId String?
+  company   Company?    @relation(fields: [companyId], references: [id], onDelete: SetNull)
 
   createdAt DateTime    @default(now())
 
@@ -99,7 +99,7 @@ model UserPermission {
   userId       String
   permissionId String
 
-  user       User       @relation(fields: [userId], references: [id])
+  user       User       @relation(fields: [userId], references: [id], onDelete: Cascade)
   permission Permission @relation(fields: [permissionId], references: [id])
 
   @@unique([userId, permissionId])
@@ -113,7 +113,7 @@ model CompanyProduct {
   companyId String
   productId String
 
-  company Company @relation(fields: [companyId], references: [id])
+  company Company @relation(fields: [companyId], references: [id], onDelete: Cascade)
   product Product @relation(fields: [productId], references: [id])
 
   userAccess UserProduct[]
@@ -127,7 +127,7 @@ model UserProduct {
   userId           String
   companyProductId String
 
-  user           User           @relation(fields: [userId], references: [id])
+  user           User           @relation(fields: [userId], references: [id], onDelete: Cascade)
   companyProduct CompanyProduct @relation(fields: [companyProductId], references: [id])
 
   @@unique([userId, companyProductId])

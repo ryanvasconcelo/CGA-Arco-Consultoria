@@ -38,7 +38,7 @@ class UserController {
         } = req.body;
 
         try {
-            const hashedPassword = await bcrypt.hash('123456', 8);
+            const hashedPassword = await bcrypt.hash('123456', 10);
 
             // --- VERIFICAÇÃO/CORREÇÃO DAS PERMISSÕES ---
             const permissionsToConnect: { id: string }[] = [];
@@ -175,6 +175,64 @@ class UserController {
             }
             return res.status(500).json({ error: "Falha ao atualizar o usuário." });
         }
+    }
+
+    public async changePassword(req: Request, res: Response): Promise<Response> {
+        const authenticatedUser = req.user;
+        const { oldPassword, newPassword } = req.body;
+
+        if (!authenticatedUser) {
+            return res.status(401).json({ error: 'Usuário não autenticado.' });
+        }
+
+        if (!oldPassword || !newPassword) {
+            return res.status(400).json({ error: 'Senha antiga e nova senha são obrigatórias.' });
+        }
+
+        try {
+            const user = await prisma.user.findUnique({ where: { id: authenticatedUser.sub } });
+
+            if (!user) {
+                return res.status(404).json({ error: 'Usuário não encontrado.' });
+            }
+
+            const isPasswordCorrect = await bcrypt.compare(oldPassword, user.password);
+
+            if (!isPasswordCorrect) {
+                return res.status(401).json({ error: 'A senha antiga está incorreta.' });
+            }
+
+            const hashedNewPassword = await bcrypt.hash(newPassword, 10);
+
+            await prisma.user.update({
+                where: { id: user.id },
+                data: {
+                    password: hashedNewPassword,
+                    passwordResetRequired: false,
+                },
+            });
+
+            return res.status(200).json({ message: 'Senha alterada com sucesso.' });
+
+        } catch (error) {
+            console.error(`Erro no UserController ao alterar a senha do usuário ${authenticatedUser.sub}:`, error);
+            return res.status(500).json({ error: "Falha ao alterar a senha." });
+        }
+    }
+
+    public async delete(req: Request, res: Response): Promise<Response> {
+        const { id } = req.params;
+        const authenticatedUser = req.user;
+
+        // Regra de Negócio: Um usuário não pode se auto-deletar.
+        if (authenticatedUser?.sub === id) {
+            return res.status(403).json({ error: 'Ação proibida. Você não pode remover seu próprio usuário.' });
+        }
+
+        // Graças ao 'onDelete: Cascade' no schema, o Prisma deletará o usuário e todos os dados dependentes.
+        await prisma.user.delete({ where: { id } });
+
+        return res.status(204).send();
     }
 
 }

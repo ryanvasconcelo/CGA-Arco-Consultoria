@@ -1,7 +1,7 @@
-import { useState } from "react";
-import { useQuery } from "@tanstack/react-query";
+import { useState, useMemo } from "react";
+import { useQuery, useMutation, useQueryClient, keepPreviousData } from "@tanstack/react-query";
 import { useAuth } from "@/contexts/AuthContext";
-import { fetchUsers } from "@/services/userService";
+import { fetchUsers, deleteUser } from "@/services/userService";
 import { fetchCompanies } from "@/services/companyService";
 import { Search, Plus, MoreHorizontal, Eye, Edit2, Trash2, UserPlus, Building2, FileText, Loader2, AlertTriangle } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -22,8 +22,19 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 import { EnhancedUserForm } from "@/components/EnhancedUserForm";
 import Header from "@/components/Header";
+import { SimplePagination } from "@/components/SimplePagination";
 
 const roleLabels: { [key: string]: string } = {
   SUPER_ADMIN: "Super Admin",
@@ -32,13 +43,14 @@ const roleLabels: { [key: string]: string } = {
 };
 
 const roleColors: { [key: string]: string } = {
-  SUPER_ADMIN: "bg-gradient-to-r from-purple-500 to-pink-500",
-  ADMIN: "bg-gradient-to-r from-blue-500 to-cyan-500",
-  USER: "bg-gradient-to-r from-green-500 to-emerald-500"
+  SUPER_ADMIN: "bg-gradient-to-r from-[hsl(var(--role-super-admin-from))] to-[hsl(var(--role-super-admin-to))]",
+  ADMIN: "bg-gradient-to-r from-[hsl(var(--role-admin-from))] to-[hsl(var(--role-admin-to))]",
+  USER: "bg-gradient-to-r from-[hsl(var(--role-user-from))] to-[hsl(var(--role-user-to))]"
 };
 
 export default function UserManagement() {
   const { user: currentUser, loading: authLoading } = useAuth();
+  const queryClient = useQueryClient();
 
   if (authLoading) {
     return (
@@ -49,48 +61,61 @@ export default function UserManagement() {
   }
 
   // A query de companies continua, mas só para o SUPER_ADMIN
-  const isSuperAdmin = currentUser?.role === 'SUPER_ADMIN';
-  const { data: companiesForSuperAdmin } = useQuery({
-    queryKey: ['all-companies'],
-    queryFn: fetchCompanies,
-    enabled: isSuperAdmin,
+  const isAdminOrSuperAdmin = currentUser?.role === 'ADMIN' || currentUser?.role === 'SUPER_ADMIN';
+  // CORREÇÃO: A função fetchCompanies agora espera paginação. Como queremos todos os dados para o dropdown,
+  // passamos valores altos para page e pageSize para buscar todos os registros em uma única chamada.
+  const { data: companiesForForm, isLoading: isLoadingCompanies } = useQuery({
+    queryKey: ['all-companies-for-form'],
+    queryFn: () => fetchCompanies(1, 9999), // Busca todas as empresas para o formulário
+    // Habilita a query se o usuário for ADMIN ou SUPER_ADMIN
+    enabled: isAdminOrSuperAdmin,
   });
 
   const [searchTerm, setSearchTerm] = useState("");
   const [roleFilter, setRoleFilter] = useState<string>("all");
   const [statusFilter, setStatusFilter] = useState<string>("all");
   const [isUserFormOpen, setIsUserFormOpen] = useState(false);
+  const [page, setPage] = useState(1);
+  const pageSize = 10;
   const [selectedUser, setSelectedUser] = useState(null);
+  const [userToDelete, setUserToDelete] = useState<any | null>(null);
 
-  // Query de usuários (agora nossa fonte principal de dados)
-  const { data: users, isLoading: isLoadingUsers, isError: isUsersError } = useQuery({
-    queryKey: ['users'],
-    queryFn: fetchUsers,
+  const { data, isLoading: isLoadingUsers, isError: isUsersError } = useQuery({
+    queryKey: ['users', page, pageSize],
+    queryFn: () => fetchUsers(page, pageSize),
+    placeholderData: keepPreviousData,
   });
 
-  const getCompaniesForForm = () => {
-    if (isSuperAdmin) {
-      return companiesForSuperAdmin; // SUPER ADMIN usa a lista completa
-    }
-    // ADMIN usa sua própria empresa, extraída da lista de usuários
-    if (users && users.length > 0) {
-      // Pega a primeira empresa da lista de usuários (já que o admin só vê a sua)
-      const adminCompany = users[0].company;
-      return adminCompany ? [adminCompany] : [];
-    }
-    return [];
-  }
+  const users = data?.data || [];
+  const totalCount = data?.totalCount || 0;
 
-  const filteredUsers = users?.filter(user => {
+  const handlePageChange = (newPage: number) => {
+    setPage(newPage);
+  };
+
+  const deleteUserMutation = useMutation({
+    mutationFn: (id: string) => deleteUser(id), // <-- CORREÇÃO AQUI
+    onSuccess: () => {
+      console.log("Usuário removido com sucesso!");
+      queryClient.invalidateQueries({ queryKey: ['users'] });
+      setUserToDelete(null); // Fecha o diálogo de confirmação
+    },
+    onError: (error) => {
+      console.error("Erro ao remover usuário:", error);
+      // Idealmente, mostrar um toast de erro para o usuário aqui.
+      setUserToDelete(null);
+    }
+  });
+
+  const filteredUsers = useMemo(() => users.filter(user => {
     const companyName = user.company?.name || '';
     const matchesSearch = user.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
       user.email.toLowerCase().includes(searchTerm.toLowerCase()) ||
       companyName.toLowerCase().includes(searchTerm.toLowerCase());
     const matchesRole = roleFilter === "all" || user.role === roleFilter;
     const matchesStatus = statusFilter === "all" || user.status === statusFilter;
-
     return matchesSearch && matchesRole && matchesStatus;
-  }) || [];
+  }), [users, searchTerm, roleFilter, statusFilter]);
 
   const handleEditUser = (user: any) => {
     setSelectedUser(user);
@@ -108,8 +133,8 @@ export default function UserManagement() {
 
   const getStatusBadge = (status: string) => {
     return status === "ACTIVE"
-      ? <Badge className="bg-success/20 text-success border-success/30">Ativo</Badge>
-      : <Badge className="bg-destructive/20 text-destructive border-destructive/30">Inativo</Badge>;
+      ? <Badge className="bg-[hsl(var(--success-light))] text-[hsl(var(--success))] border-[hsl(var(--success))]/30 font-medium">Ativo</Badge>
+      : <Badge className="bg-[hsl(var(--error-light))] text-[hsl(var(--error))] border-[hsl(var(--error))]/30 font-medium">Inativo</Badge>;
   };
 
   return (
@@ -120,15 +145,15 @@ export default function UserManagement() {
         <div className="glass-card rounded-xl p-6 mb-8 border border-white/10">
           <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
             <div>
-              <h1 className="text-3xl font-bold">Gestão de Usuários</h1>
+              <h1 className="text-3xl font-bold bg-gradient-to-r from-primary to-primary-hover bg-clip-text text-transparent">Gestão de Usuários</h1>
               <p className="text-muted-foreground mt-2">Gerencie usuários da sua empresa com controle total de permissões</p>
             </div>
             <div className="flex gap-3">
-              <Button onClick={() => window.location.href = '/admin/audit'} variant="outline" className="hover-lift">
+              <Button onClick={() => window.location.href = '/admin/audit'} variant="outline" className="hover-lift border-border hover:bg-muted/50">
                 <FileText className="mr-2 h-4 w-4" />
                 Auditoria
               </Button>
-              <Button onClick={() => window.location.href = '/admin/companies'} variant="outline" className="hover-lift">
+              <Button onClick={() => window.location.href = '/admin/companies'} variant="outline" className="hover-lift border-border hover:bg-muted/50">
                 <Building2 className="mr-2 h-4 w-4" />
                 Empresas
               </Button>
@@ -136,10 +161,10 @@ export default function UserManagement() {
                 <Button
                   onClick={handleAddUser}
                   className="gradient-primary hover-lift"
-                  disabled={isSuperAdmin && (isLoadingCompanies || !companies)}
+                  disabled={isLoadingCompanies || !companiesForForm?.data}
                 >
                   <UserPlus className="mr-2 h-4 w-4" />
-                  {isSuperAdmin && isLoadingCompanies ? "Carregando..." : "Novo Usuário"}
+                  {isLoadingCompanies ? "Carregando..." : "Novo Usuário"}
                 </Button>
               )}
             </div>
@@ -149,7 +174,7 @@ export default function UserManagement() {
         {/* Filters and Table continue here, no changes needed in the JSX below this point */}
         <Card className="glass-card border-white/10">
           <CardHeader>
-            <CardTitle>Usuários ({filteredUsers.length})</CardTitle>
+            <CardTitle className="text-xl font-semibold">Usuários ({totalCount})</CardTitle>
           </CardHeader>
           <CardContent>
             {isLoadingUsers && <div className="text-center py-4">Carregando usuários...</div>}
@@ -192,17 +217,24 @@ export default function UserManagement() {
                               </Button>
                             </DropdownMenuTrigger>
                             <DropdownMenuContent align="end" className="glass-card border-white/10">
-                              <DropdownMenuItem onClick={() => handleEditUser(user)}>
+                              <DropdownMenuItem onSelect={(e) => e.preventDefault()} onClick={() => handleEditUser(user)} className="cursor-pointer">
                                 <Edit2 className="mr-2 h-4 w-4" />
                                 Editar
                               </DropdownMenuItem>
-                              <DropdownMenuItem onClick={() => handleToggleStatus(user.id)}>
+                              <DropdownMenuItem onSelect={(e) => e.preventDefault()} onClick={() => handleToggleStatus(user.id)} className="cursor-pointer">
                                 <Eye className="mr-2 h-4 w-4" />
                                 {user.status === "active" ? "Desativar" : "Ativar"}
                               </DropdownMenuItem>
-                              <DropdownMenuItem className="text-destructive">
+                              <DropdownMenuItem
+                                className="text-destructive cursor-pointer"
+                                // onSelect previne o fechamento imediato do menu, permitindo que o onClick
+                                // abra o modal de confirmação sem problemas.
+                                onSelect={(e) => e.preventDefault()}
+                                onClick={() => setUserToDelete(user)}
+                                disabled={deleteUserMutation.isPending || currentUser?.id === user.id}
+                              >
                                 <Trash2 className="mr-2 h-4 w-4" />
-                                Remover
+                                {currentUser?.id === user.id ? "Não pode remover a si mesmo" : "Remover"}
                               </DropdownMenuItem>
                             </DropdownMenuContent>
                           </DropdownMenu>
@@ -213,6 +245,14 @@ export default function UserManagement() {
                 </Table>
               </div>
             )}
+            {!isLoadingUsers && !isUsersError && users.length > 0 && (
+              <SimplePagination
+                page={page}
+                pageSize={pageSize}
+                totalCount={totalCount}
+                onPageChange={handlePageChange}
+              />
+            )}
           </CardContent>
         </Card>
       </main>
@@ -222,10 +262,33 @@ export default function UserManagement() {
         <EnhancedUserForm
           user={selectedUser}
           currentUser={currentUser}
-          availableCompanies={getCompaniesForForm()} // <-- USA A NOVA FUNÇÃO
+          availableCompanies={companiesForForm?.data || []}
           onClose={() => setIsUserFormOpen(false)}
         />
       )}
+
+      <AlertDialog open={!!userToDelete} onOpenChange={() => setUserToDelete(null)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Você tem certeza?</AlertDialogTitle>
+            <AlertDialogDescription>
+              Esta ação não pode ser desfeita. Isso removerá permanentemente o usuário
+              <span className="font-bold"> {userToDelete?.name} </span>
+              e todos os seus dados associados.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel disabled={deleteUserMutation.isPending}>Cancelar</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={() => userToDelete && deleteUserMutation.mutate(userToDelete.id)}
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+              disabled={deleteUserMutation.isPending}
+            >
+              {deleteUserMutation.isPending ? <><Loader2 className="mr-2 h-4 w-4 animate-spin" /> Removendo...</> : "Sim, remover"}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }

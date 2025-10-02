@@ -52,6 +52,17 @@ class SessionController {
                 }
             );
 
+            // Verifica se o usuário precisa resetar a senha
+            if (user.passwordResetRequired) {
+                const { password: _, ...userWithoutPassword } = user;
+                return response.status(200).json({
+                    requiresPasswordReset: true,
+                    message: 'Você precisa alterar sua senha temporária.',
+                    token, // Retorna o token para permitir a troca de senha
+                    user: userWithoutPassword
+                });
+            }
+
             const { password: _, ...userWithoutPassword } = user;
 
             return response.json({

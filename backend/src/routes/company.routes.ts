@@ -1,24 +1,32 @@
-// backend/src/routes/company.routes.ts
 import { Router } from 'express';
-import multer from 'multer'; // 1. Importe o multer
+import { uploadLogo } from '../middleware/upload'; // ADICIONAR ESTA LINHA
 import CompanyController from '../controllers/CompanyController';
 import { checkRole } from '../middleware/authorization';
 
 const companyRouter = Router();
-const upload = multer({ dest: 'uploads/' }); // 2. Configure um destino temporário para os uploads
 
 // Rotas específicas primeiro
 companyRouter.get('/', checkRole(['SUPER_ADMIN', 'ADMIN']), CompanyController.index);
 
-// 3. APLIQUE O MIDDLEWARE DO MULTER AQUI
-// Ele deve vir ANTES do seu checkRole
-companyRouter.post('/', upload.single('logo'), checkRole(['SUPER_ADMIN']), CompanyController.create);
-
-companyRouter.post('/', checkRole(['SUPER_ADMIN']), CompanyController.create);
+// SUBSTITUIR as duas rotas POST duplicadas por esta:
+companyRouter.post(
+    '/',
+    uploadLogo.single('logo'),
+    checkRole(['SUPER_ADMIN']),
+    CompanyController.create
+);
 
 // Rotas genéricas com parâmetros depois
 companyRouter.get('/:id', checkRole(['SUPER_ADMIN', 'ADMIN']), CompanyController.show);
-companyRouter.put('/:id', checkRole(['SUPER_ADMIN', 'ADMIN']), CompanyController.update);
+
+// ADICIONAR uploadLogo.single('logo') na rota PUT:
+companyRouter.put(
+    '/:id',
+    uploadLogo.single('logo'),
+    checkRole(['SUPER_ADMIN', 'ADMIN']),
+    CompanyController.update
+);
+
 companyRouter.delete('/:id', checkRole(['SUPER_ADMIN']), CompanyController.delete);
 
 // Rotas de sub-recursos

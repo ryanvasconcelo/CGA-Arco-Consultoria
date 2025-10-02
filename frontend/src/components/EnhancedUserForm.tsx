@@ -50,20 +50,54 @@ export function EnhancedUserForm({
   const isAdmin = currentUser?.role === "ADMIN";
 
   useEffect(() => {
-    if (isEditing && user) {
+    if (user) { // Se estiver editando um usuário existente
+      // 1. Cria um objeto para representar o estado dos checkboxes, todos desligados por padrão.
+      const initialPermissions = {
+        canViewDocuments: false, canEditDocuments: false, canAddDocuments: false,
+        canDeleteDocuments: false, canViewDiagnostico: false, canViewNormas: false,
+        canViewRegisters: false, canViewDashboards: false, canViewLegislacao: false,
+        canViewCFTV: false,
+      };
+
+      // 2. Cria um "mapa" para traduzir a permissão do banco (ex: 'VIEW_DOCUMENTS') para a chave do formulário (ex: 'canViewDocuments').
+      const permissionKeyMap: { [key: string]: keyof typeof initialPermissions } = {
+        'VIEW_DOCUMENTS': 'canViewDocuments',
+        'EDIT_DOCUMENTS': 'canEditDocuments',
+        'CREATE_DOCUMENTS': 'canAddDocuments',
+        'DELETE_DOCUMENTS': 'canDeleteDocuments',
+        'VIEW_DIAGNOSTIC': 'canViewDiagnostico',
+        'VIEW_NORMS': 'canViewNormas',
+        'VIEW_REGISTERS': 'canViewRegisters',
+        'VIEW_DASHBOARDS': 'canViewDashboards',
+        'VIEW_LEGISLATION': 'canViewLegislacao',
+        'VIEW_CFTV': 'canViewCFTV',
+      };
+
+      // 3. Percorre as permissões que vieram do banco para este usuário.
+      user.permissions?.forEach((p: any) => {
+        const compositeKey = `${p.permission.action}_${p.permission.subject}`;
+        const formKey = permissionKeyMap[compositeKey];
+        if (formKey) {
+          // Se encontrar uma correspondência, liga o checkbox correspondente.
+          initialPermissions[formKey] = true;
+        }
+      });
+
+      // 4. Atualiza o estado do formulário com todos os dados corretos.
       setFormData({
         name: user.name || "",
         email: user.email || "",
         role: user.role || "USER",
         status: user.status || "ACTIVE",
-        companyId: user.companyId || "",
+        companyId: user.company?.id || "",
         services: user.userProducts?.map((up: any) => up.companyProduct.productId) || [],
-        arcoPortusPermissions: user.arcoPortusPermissions || formData.arcoPortusPermissions,
+        arcoPortusPermissions: initialPermissions,
       });
-    } else if (isAdmin) {
-      setFormData(prev => ({ ...prev, companyId: currentUser?.companyId }));
+    } else if (isAdmin && currentUser?.company?.id) {
+      // CORREÇÃO: Acessa currentUser.company.id e garante que não é nulo.
+      setFormData(prev => ({ ...prev, companyId: currentUser.company.id }));
     }
-  }, [user, isEditing, isSuperAdmin, isAdmin, currentUser]);
+  }, [user, isAdmin, currentUser?.company?.id]);
 
   const servicesToShow = useMemo(() => {
     if (!formData.companyId) return [];
@@ -132,8 +166,18 @@ export function EnhancedUserForm({
   };
 
   const getRoleOptions = () => {
-    if (isSuperAdmin) return [{ value: "USER", label: "Usuário" }, { value: "ADMIN", label: "Administrador" }, { value: "SUPER_ADMIN", label: "Super Admin" }];
-    if (isAdmin) return [{ value: "USER", label: "Usuário" }, { value: "ADMIN", label: "Administrador" }];
+    if (isSuperAdmin) {
+      return [
+        { value: "USER", label: "Usuário" },
+        { value: "ADMIN", label: "Administrador" },
+        { value: "SUPER_ADMIN", label: "Super Admin" }
+      ];
+    } else if (isAdmin) {
+      return [
+        { value: "USER", label: "Usuário" },
+        { value: "ADMIN", label: "Administrador" }
+      ];
+    }
     return [{ value: "USER", label: "Usuário" }];
   };
 
@@ -143,7 +187,9 @@ export function EnhancedUserForm({
     <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center p-4 z-50">
       <Card className="w-full max-w-2xl glass-card border-white/10 max-h-[90vh] overflow-y-auto">
         <CardHeader className="flex flex-row items-center justify-between">
-          <CardTitle>{isEditing ? "Editar Usuário" : "Novo Usuário"}</CardTitle>
+          <CardTitle className="text-2xl font-bold bg-gradient-to-r from-primary to-primary-hover bg-clip-text text-transparent flex items-center gap-3">
+            {isEditing ? "Editar Usuário" : "Novo Usuário"}
+          </CardTitle>
           <Button variant="ghost" size="icon" onClick={onClose}><X className="h-4 w-4" /></Button>
         </CardHeader>
         <CardContent>
@@ -159,6 +205,45 @@ export function EnhancedUserForm({
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div className="space-y-2"><Label htmlFor="name">Nome Completo</Label><Input id="name" value={formData.name} onChange={(e) => handleChange("name", e.target.value)} required /></div>
                     <div className="space-y-2"><Label htmlFor="email">Email</Label><Input id="email" type="email" value={formData.email} onChange={(e) => handleChange("email", e.target.value)} required /></div>
+                  </div>
+                </div>
+                {/* Permissões */}
+                <div className="space-y-4">
+                  <h3 className="text-lg font-medium flex items-center gap-2">
+                    <Shield className="h-4 w-4" />
+                    Permissões e Acesso
+                  </h3>
+
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div className="space-y-2">
+                      <Label htmlFor="role">Papel/Função</Label>
+                      <select
+                        id="role"
+                        value={formData.role}
+                        onChange={(e) => handleChange("role", e.target.value)}
+                        className="w-full px-3 py-2 rounded-md border border-input bg-background/50 backdrop-blur-sm"
+                        required
+                      >
+                        {getRoleOptions().map((option) => (
+                          <option key={option.value} value={option.value}>
+                            {option.label}
+                          </option>
+                        ))}
+                      </select>
+                    </div>
+
+                    <div className="space-y-2">
+                      <Label htmlFor="status">Status</Label>
+                      <select
+                        id="status"
+                        value={formData.status}
+                        onChange={(e) => handleChange("status", e.target.value)}
+                        className="w-full px-3 py-2 rounded-md border border-input bg-background/50 backdrop-blur-sm"
+                      >
+                        <option value="active">Ativo</option>
+                        <option value="inactive">Inativo</option>
+                      </select>
+                    </div>
                   </div>
                 </div>
                 <div className="space-y-4">
@@ -227,8 +312,8 @@ export function EnhancedUserForm({
               </TabsContent>
             </Tabs>
             <div className="flex gap-3 pt-4">
-              <Button type="button" variant="outline" onClick={onClose} className="flex-1">Cancelar</Button>
-              <Button type="submit" className="flex-1" disabled={isPending}>
+              <Button type="button" variant="outline" onClick={onClose} className="flex-1 border-border hover:bg-muted/50">Cancelar</Button>
+              <Button type="submit" className="flex-1 bg-primary text-primary-foreground hover:bg-primary/90 shadow-soft hover:shadow-medium transition-all" disabled={isPending}>
                 <Save className="mr-2 h-4 w-4" />
                 {isPending ? "Salvando..." : (isEditing ? "Salvar Alterações" : "Criar Usuário")}
               </Button>

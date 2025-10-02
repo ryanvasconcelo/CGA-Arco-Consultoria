@@ -1,10 +1,15 @@
 // backend/src/middleware/auth.ts
 import { Request, Response, NextFunction } from 'express';
 import jwt from 'jsonwebtoken';
+import { Role } from '@prisma/client';
 
-// ATUALIZADO para esperar 'sub' em vez de 'userId'
 interface TokenPayload {
     sub: string;
+    role: Role;
+    company: {
+        id: string;
+        name: string;
+    };
     iat: number;
     exp: number;
 }
@@ -23,12 +28,14 @@ export function authMiddleware(
     const [, token] = authorization.split(' ');
 
     try {
-        const decoded = jwt.verify(token, process.env.JWT_SECRET as string);
+        const decoded = jwt.verify(token, process.env.JWT_SECRET as string) as TokenPayload;
 
-        // ATUALIZADO: Lemos 'sub' e o renomeamos para a variável 'userId'
-        const { sub: userId } = decoded as TokenPayload;
-
-        req.userId = userId;
+        // Popula req.user com as informações do token
+        req.user = {
+            sub: decoded.sub,
+            role: decoded.role,
+            companyId: decoded.company.id,
+        };
 
         return next();
     } catch (error) {

@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useLocation } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -84,14 +84,22 @@ const gridLayouts = [
 
 export default function Login() {
   const navigate = useNavigate();
+  const location = useLocation();
   const { signIn } = useAuth();
-  const [formData, setFormData] = useState({ email: "", senha: "" });
+  const [formData, setFormData] = useState({ email: "", password: "" });
   const [error, setError] = useState<string | null>(null);
   const [currentLayout, setCurrentLayout] = useState(0);
   const [transitioningCards, setTransitioningCards] = useState<Set<number>>(new Set());
   const [parent] = useAutoAnimate();
 
   useEffect(() => {
+    // Verifica se há uma mensagem de erro vinda do redirecionamento (ProtectedRoute)
+    if (location.state?.message) {
+      setError(location.state.message);
+      // Limpa o state para não mostrar a mensagem novamente se a página for recarregada
+      window.history.replaceState({}, document.title);
+    }
+
     // Função para trocar cards individuais de forma aleatória
     const startRandomTransitions = () => {
       const intervalId = setInterval(() => {
@@ -132,7 +140,7 @@ export default function Login() {
 
     const intervalId = startRandomTransitions();
     return () => clearInterval(intervalId);
-  }, [transitioningCards]);
+  }, [transitioningCards, location.state]);
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
@@ -143,10 +151,17 @@ export default function Login() {
     e.preventDefault();
     setError(null);
     try {
-      await signIn({ email: formData.email, password: formData.senha });
+      await signIn({ email: formData.email, password: formData.password });
       navigate('/');
-    } catch (err) {
-      setError('Email ou senha incorretos. Por favor, tente novamente.');
+    } catch (err: any) {
+      if (err.response?.data?.requiresPasswordReset) {
+        // Armazena o token e senha temporários para usar na página de reset
+        sessionStorage.setItem('@CGA:tempToken', err.response.data.token);
+        sessionStorage.setItem('@CGA:tempPassword', formData.password);
+        navigate('/force-reset-password');
+      } else {
+        setError('Email ou senha incorretos. Por favor, tente novamente.');
+      }
     }
   };
 
@@ -192,7 +207,7 @@ export default function Login() {
                 if (!service) return null;
 
                 const isTransitioning = transitioningCards.has(service.id);
-
+                // CORREÇÃO: Adicionando a prop 'key' única para cada item da lista
                 return (
                   <div
                     className="w-full h-full"
@@ -209,6 +224,7 @@ export default function Login() {
                       }}
                     >
                       <Tilt
+                        key={service.id} // Adicionando key aqui
                         glareEnable={true}
                         glareColor="#ffffff"
                         glarePosition="bottom"
@@ -270,8 +286,8 @@ export default function Login() {
           <div className="w-full max-w-md mx-auto lg:mx-auto">
             <Card className="glass-card border-white/10 p-8 backdrop-blur-xl animate-fade-in">
               <div className="space-y-6">
-                <div className="text-center space-y-2">
-                  <h1 className="text-3xl font-bold">Acesse sua conta</h1>
+                <div className="text-center space-y-3">
+                  <h1 className="text-3xl font-bold bg-gradient-to-r from-primary to-primary-hover bg-clip-text text-transparent">Acesse sua conta</h1>
                   <p className="text-muted-foreground">Entre com suas credenciais</p>
                 </div>
 
@@ -296,17 +312,17 @@ export default function Login() {
                   </div>
 
                   <div className="space-y-2">
-                    <Label htmlFor="senha" className="text-sm font-medium">
+                    <Label htmlFor="password" className="text-sm font-medium">
                       Senha
                     </Label>
                     <div className="relative">
                       <Lock className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
                       <Input
-                        id="senha"
-                        name="senha"
+                        id="password"
+                        name="password"
                         type="password"
                         placeholder="••••••••"
-                        value={formData.senha}
+                        value={formData.password}
                         onChange={handleInputChange}
                         className="pl-10 glass-input h-12"
                         required
@@ -315,14 +331,14 @@ export default function Login() {
                   </div>
 
                   {error && (
-                    <div className="text-sm text-red-500 text-center bg-red-50 dark:bg-red-950/30 p-3 rounded-lg">
+                    <div className="text-sm text-[hsl(var(--error))] text-center bg-[hsl(var(--error-light))] dark:bg-[hsl(var(--error))]/20 p-3 rounded-lg border border-[hsl(var(--error))]/20">
                       {error}
                     </div>
                   )}
 
                   <Button
                     type="submit"
-                    className="w-full gradient-primary h-12 text-base font-semibold hover-lift"
+                    className="w-full bg-primary text-primary-foreground hover:bg-primary/90 h-12 text-base font-semibold shadow-soft hover:shadow-medium transition-all"
                   >
                     Acessar
                   </Button>
@@ -330,7 +346,7 @@ export default function Login() {
                   <div className="text-center">
                     <button
                       type="button"
-                      className="text-sm text-muted-foreground hover:text-primary transition-colors"
+                      className="text-sm text-muted-foreground hover:text-primary transition-colors font-medium"
                     >
                       Esqueci minha senha
                     </button>

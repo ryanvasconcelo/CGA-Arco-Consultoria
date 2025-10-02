@@ -1,6 +1,6 @@
 // frontend/src/contexts/AuthContext.tsx
 import React, { createContext, useState, useContext, useEffect, ReactNode } from 'react';
-import { api, apiPublic } from '../lib/api';
+import { apiPublic } from '../lib/api'; // <<< MUDANÇA IMPORTANTE: Remova a importação de 'api' daqui
 
 // Definindo os tipos para o contexto para termos autocomplete e segurança
 interface AuthContextData {
@@ -17,28 +17,48 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     const [user, setUser] = useState<any | null>(null);
     const [loading, setLoading] = useState(true);
 
-    // DEIXE APENAS ESTE useEffect
     useEffect(() => {
         const storedUser = localStorage.getItem('@CGA:user');
         const storedToken = localStorage.getItem('@CGA:token');
 
         if (storedUser && storedToken) {
             setUser(JSON.parse(storedUser));
-            api.defaults.headers.common['Authorization'] = `Bearer ${storedToken}`;
+            // O interceptor em api.ts já cuida de adicionar o token,
+            // então não precisamos mais do `api.defaults` aqui.
         }
         setLoading(false);
+
+        // --- ADICIONADO: Listener para o evento de logout ---
+        // Esta função será chamada quando o evento 'unauthorized' for disparado pelo interceptor.
+        const handleUnauthorized = () => {
+            signOut();
+        };
+
+        // Adiciona o "ouvinte" de eventos.
+        window.addEventListener('unauthorized', handleUnauthorized);
+
+        // Função de limpeza: remove o "ouvinte" quando o componente for desmontado.
+        // Isso evita memory leaks.
+        return () => window.removeEventListener('unauthorized', handleUnauthorized);
     }, []);
 
     const signIn = async ({ email, password }) => {
         // Use a instância PÚBLICA para o login
         const response = await apiPublic.post('/sessions', { email, password });
+
+        // Verifica se o backend retornou requiresPasswordReset
+        if (response.data.requiresPasswordReset) {
+            // Lança um erro com a estrutura esperada pelo Login.tsx
+            const error: any = new Error('Password reset required');
+            error.response = { data: response.data };
+            throw error;
+        }
+
         const { user: apiUser, token } = response.data;
 
         localStorage.setItem('@CGA:user', JSON.stringify(apiUser));
         localStorage.setItem('@CGA:token', token);
 
-        // IMPORTANTE: Continue setando o header na instância PRIVADA para as futuras requisições
-        api.defaults.headers.common['Authorization'] = `Bearer ${token}`;
         setUser(apiUser);
     };
 
@@ -46,7 +66,10 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
         localStorage.removeItem('@CGA:user');
         localStorage.removeItem('@CGA:token');
         setUser(null);
-        window.location.href = '/login'; // Redireciona para a página de login
+        // Usamos replace para não adicionar a página atual ao histórico do navegador
+        if (window.location.pathname !== '/login') {
+            window.location.replace('/login');
+        }
     };
 
     return (

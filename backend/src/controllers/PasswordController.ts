@@ -71,7 +71,7 @@ class PasswordController {
         }
 
         // 3. Criptografa a nova senha
-        const hashedPassword = await bcrypt.hash(password, 8);
+        const hashedPassword = await bcrypt.hash(password, 10);
 
         // 4. Atualiza a senha e limpa os campos de reset
         await prisma.user.update({

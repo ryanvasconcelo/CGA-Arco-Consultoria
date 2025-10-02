@@ -1,5 +1,7 @@
 import { useState } from "react";
-import { Search, Filter, Calendar, User, Activity, Eye, Shield, Clock } from "lucide-react";
+import { useQuery, keepPreviousData } from "@tanstack/react-query";
+import { fetchAuditLogs, fetchAuditStats } from "@/services/auditService";
+import { Search, Filter, Calendar, User, Activity, Eye, Shield, Clock, Loader2, AlertTriangle, ArrowLeft } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -20,92 +22,30 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import Header from "@/components/Header";
+import { SimplePagination } from "@/components/SimplePagination";
 
-// Mock audit data
-const mockAuditLogs = [
-  {
-    id: "1",
-    action: "CREATE_USER",
-    description: "Criou usuário 'Maria Santos'",
-    user: "João Silva (Admin)",
-    company: "Porto Chibatão S.A.",
-    timestamp: "2024-01-15T14:30:00",
-    severity: "info",
-    details: {
-      targetUser: "Maria Santos",
-      role: "USER",
-      email: "maria@email.com"
-    }
-  },
-  {
-    id: "2",
-    action: "UPDATE_COMPANY",
-    description: "Atualizou configurações da empresa",
-    user: "Admin Sistema (Super Admin)",
-    company: "Porto Chibatão S.A.",
-    timestamp: "2024-01-15T13:15:00",
-    severity: "warning",
-    details: {
-      changedFields: ["services", "visual_identity"],
-      servicesAdded: ["arco-portus"]
-    }
-  },
-  {
-    id: "3",
-    action: "GRANT_PERMISSION",
-    description: "Concedeu permissão de acesso ao Arco Portus",
-    user: "João Silva (Admin)",
-    company: "Porto Chibatão S.A.",
-    timestamp: "2024-01-15T12:45:00",
-    severity: "info",
-    details: {
-      targetUser: "Carlos Oliveira",
-      service: "arco-portus",
-      permissions: ["read", "write"]
-    }
-  },
-  {
-    id: "4",
-    action: "DELETE_USER",
-    description: "Removeu usuário 'Pedro Costa'",
-    user: "Admin Sistema (Super Admin)",
-    company: "Empresa Marítima Ltda",
-    timestamp: "2024-01-15T11:20:00",
-    severity: "error",
-    details: {
-      targetUser: "Pedro Costa",
-      reason: "Desligamento da empresa"
-    }
-  },
-  {
-    id: "5",
-    action: "LOGIN",
-    description: "Realizou login no sistema",
-    user: "Maria Santos (User)",
-    company: "Porto Chibatão S.A.",
-    timestamp: "2024-01-15T09:30:00",
-    severity: "info",
-    details: {
-      ipAddress: "192.168.1.100",
-      userAgent: "Chrome 120.0"
-    }
-  }
-];
-
-const actionTypes = {
+const actionTypes: Record<string, string> = {
   CREATE_USER: "Criar Usuário",
   UPDATE_USER: "Atualizar Usuário",
   DELETE_USER: "Remover Usuário",
   CREATE_COMPANY: "Criar Empresa",
   UPDATE_COMPANY: "Atualizar Empresa",
   DELETE_COMPANY: "Remover Empresa",
-  GRANT_PERMISSION: "Conceder Permissão",
-  REVOKE_PERMISSION: "Revogar Permissão",
-  LOGIN: "Login",
-  LOGOUT: "Logout"
+  ASSOCIATE_PRODUCT_TO_COMPANY: "Associar Produto",
+  DISASSOCIATE_PRODUCT_FROM_COMPANY: "Desassociar Produto",
+  ASSOCIATE_USER_TO_PRODUCT: "Associar Usuário a Produto",
+  DISASSOCIATE_USER_FROM_PRODUCT: "Desassociar Usuário de Produto",
+  ASSOCIATE_USER_TO_PERMISSION: "Conceder Permissão",
+  DISASSOCIATE_USER_FROM_PERMISSION: "Revogar Permissão",
 };
 
-const severityColors = {
+const getSeverityFromAction = (action: string): string => {
+  if (action.includes('DELETE') || action.includes('REMOVE')) return 'error';
+  if (action.includes('UPDATE')) return 'warning';
+  return 'info';
+};
+
+const severityColors: Record<string, string> = {
   info: "bg-blue-500/20 text-blue-600 border-blue-500/30",
   warning: "bg-yellow-500/20 text-yellow-600 border-yellow-500/30",
   error: "bg-red-500/20 text-red-600 border-red-500/30",
@@ -113,20 +53,31 @@ const severityColors = {
 };
 
 export default function AuditSystem() {
-  const [auditLogs] = useState(mockAuditLogs);
   const [searchTerm, setSearchTerm] = useState("");
   const [actionFilter, setActionFilter] = useState("all");
-  const [severityFilter, setSeverityFilter] = useState("all");
+  const [page, setPage] = useState(1);
+  const pageSize = 10;
   const [selectedLog, setSelectedLog] = useState<any>(null);
 
-  const filteredLogs = auditLogs.filter(log => {
-    const matchesSearch = log.description.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      log.user.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      log.company.toLowerCase().includes(searchTerm.toLowerCase());
-    const matchesAction = actionFilter === "all" || log.action === actionFilter;
-    const matchesSeverity = severityFilter === "all" || log.severity === severityFilter;
+  // Buscar logs de auditoria
+  const { data: auditData, isLoading, isError } = useQuery({
+    queryKey: ['auditLogs', actionFilter, page, searchTerm],
+    queryFn: () => fetchAuditLogs({
+      action: actionFilter !== 'all' ? actionFilter : undefined,
+      page,
+      limit: pageSize,
+      searchTerm: searchTerm,
+    }),
+    placeholderData: keepPreviousData,
+  });
 
-    return matchesSearch && matchesAction && matchesSeverity;
+  const logs = auditData?.logs || [];
+  const totalCount = auditData?.pagination.total || 0;
+
+  // Buscar estatísticas
+  const { data: stats } = useQuery({
+    queryKey: ['auditStats'],
+    queryFn: fetchAuditStats,
   });
 
   const formatTimestamp = (timestamp: string) => {
@@ -141,6 +92,30 @@ export default function AuditSystem() {
     }
   };
 
+  const getActionDescription = (log: any): string => {
+    const actionName = actionTypes[log.action] || log.action;
+    const userName = log.details?.userName || 'Sistema';
+    // CORREÇÃO: Adiciona verificação para log.company antes de acessar .name
+    const companyName = log.details?.companyName || log.company?.name || 'Empresa Removida';
+
+    switch (log.action) {
+      case 'CREATE_USER':
+        return `Criou o usuário ${userName}`;
+      case 'UPDATE_USER':
+        return `Atualizou o usuário ${userName}`;
+      case 'DELETE_USER':
+        return `Removeu o usuário ${userName}`;
+      case 'CREATE_COMPANY':
+        return `Criou a empresa ${companyName}`;
+      case 'UPDATE_COMPANY':
+        return `Atualizou a empresa ${companyName}`;
+      case 'DELETE_COMPANY':
+        return `Removeu a empresa ${companyName}`;
+      default:
+        return actionName;
+    }
+  };
+
   return (
     <div className="min-h-screen bg-gradient-to-br from-primary/5 via-background to-secondary/5">
       <Header />
@@ -148,14 +123,18 @@ export default function AuditSystem() {
       <main className="container mx-auto px-6 py-8">
         {/* Header Section */}
         <div className="glass-card rounded-xl p-6 mb-8 border border-white/10">
-          <div className="flex items-center gap-4">
+          <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
             <div>
-              <h1 className="text-3xl font-bold bg-gradient-to-r from-primary to-primary-glow bg-clip-text text-transparent">
-                Sistema de Auditoria
-              </h1>
+              <h1 className="text-3xl font-bold bg-gradient-to-r from-primary to-primary-hover bg-clip-text text-transparent">Sistema de Auditoria</h1>
               <p className="text-muted-foreground mt-2">
                 Monitore todas as atividades e alterações no sistema CGA
               </p>
+            </div>
+            <div className="flex gap-3">
+              <Button onClick={() => window.location.href = '/admin/users'} variant="outline" className="border-border hover:bg-muted/50">
+                <ArrowLeft className="mr-2 h-4 w-4" />
+                Voltar para Usuários
+              </Button>
             </div>
           </div>
         </div>
@@ -191,23 +170,6 @@ export default function AuditSystem() {
                   ))}
                 </SelectContent>
               </Select>
-
-              <Select value={severityFilter} onValueChange={setSeverityFilter}>
-                <SelectTrigger className="glass-input">
-                  <SelectValue placeholder="Severidade" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="all">Todas</SelectItem>
-                  <SelectItem value="info">Info</SelectItem>
-                  <SelectItem value="warning">Aviso</SelectItem>
-                  <SelectItem value="error">Erro</SelectItem>
-                </SelectContent>
-              </Select>
-
-              <Button variant="outline" className="hover-lift">
-                <Calendar className="mr-2 h-4 w-4" />
-                Filtrar por Data
-              </Button>
             </div>
           </CardContent>
         </Card>
@@ -219,7 +181,7 @@ export default function AuditSystem() {
               <div className="flex items-center justify-between">
                 <div>
                   <p className="text-sm font-medium text-muted-foreground">Total de Eventos</p>
-                  <p className="text-2xl font-bold">{auditLogs.length}</p>
+                  <p className="text-2xl font-bold">{stats?.totalEvents || 0}</p>
                 </div>
                 <Activity className="h-8 w-8 text-primary" />
               </div>
@@ -231,7 +193,7 @@ export default function AuditSystem() {
               <div className="flex items-center justify-between">
                 <div>
                   <p className="text-sm font-medium text-muted-foreground">Usuários Ativos</p>
-                  <p className="text-2xl font-bold">12</p>
+                  <p className="text-2xl font-bold">{stats?.activeUsers || 0}</p>
                 </div>
                 <User className="h-8 w-8 text-blue-500" />
               </div>
@@ -242,10 +204,10 @@ export default function AuditSystem() {
             <CardContent className="p-6">
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="text-sm font-medium text-muted-foreground">Eventos Críticos</p>
-                  <p className="text-2xl font-bold text-red-500">1</p>
+                  <p className="text-sm font-medium text-muted-foreground">Eventos Recentes</p>
+                  <p className="text-2xl font-bold">{stats?.recentEvents || 0}</p>
                 </div>
-                <Shield className="h-8 w-8 text-red-500" />
+                <Clock className="h-8 w-8 text-green-500" />
               </div>
             </CardContent>
           </Card>
@@ -254,10 +216,10 @@ export default function AuditSystem() {
             <CardContent className="p-6">
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="text-sm font-medium text-muted-foreground">Última Atividade</p>
-                  <p className="text-sm font-medium">Há 2 horas</p>
+                  <p className="text-sm font-medium text-muted-foreground">Últimas 24h</p>
+                  <p className="text-sm font-medium">{stats?.recentEvents || 0} eventos</p>
                 </div>
-                <Clock className="h-8 w-8 text-green-500" />
+                <Shield className="h-8 w-8 text-primary" />
               </div>
             </CardContent>
           </Card>
@@ -267,66 +229,98 @@ export default function AuditSystem() {
         <Card className="glass-card border-white/10">
           <CardHeader>
             <CardTitle className="text-lg">
-              Log de Auditoria ({filteredLogs.length} eventos)
+              Log de Auditoria ({totalCount} eventos)
             </CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="rounded-md border border-white/10 overflow-hidden">
-              <Table>
-                <TableHeader>
-                  <TableRow className="hover:bg-muted/50">
-                    <TableHead>Data/Hora</TableHead>
-                    <TableHead>Usuário</TableHead>
-                    <TableHead>Ação</TableHead>
-                    <TableHead>Descrição</TableHead>
-                    <TableHead>Empresa</TableHead>
-                    <TableHead>Severidade</TableHead>
-                    <TableHead className="text-right">Ações</TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {filteredLogs.map((log) => (
-                    <TableRow key={log.id} className="hover:bg-muted/30 transition-colors">
-                      <TableCell>
-                        <div className="text-sm">
-                          {formatTimestamp(log.timestamp)}
-                        </div>
-                      </TableCell>
-                      <TableCell>
-                        <div className="font-medium">{log.user}</div>
-                      </TableCell>
-                      <TableCell>
-                        <Badge variant="outline" className="font-mono">
-                          {actionTypes[log.action as keyof typeof actionTypes]}
-                        </Badge>
-                      </TableCell>
-                      <TableCell>
-                        <div className="max-w-xs truncate">{log.description}</div>
-                      </TableCell>
-                      <TableCell>
-                        <div className="text-sm">{log.company}</div>
-                      </TableCell>
-                      <TableCell>
-                        <Badge className={severityColors[log.severity as keyof typeof severityColors]}>
-                          {getSeverityIcon(log.severity)}
-                          <span className="ml-1 capitalize">{log.severity}</span>
-                        </Badge>
-                      </TableCell>
-                      <TableCell className="text-right">
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          onClick={() => setSelectedLog(log)}
-                          className="hover:bg-muted/50"
-                        >
-                          <Eye className="h-4 w-4" />
-                        </Button>
-                      </TableCell>
+            {/* Loading State */}
+            {isLoading && (
+              <div className="flex items-center justify-center py-10">
+                <Loader2 className="h-6 w-6 animate-spin mr-3" />
+                Carregando logs de auditoria...
+              </div>
+            )}
+
+            {/* Error State */}
+            {isError && (
+              <div className="flex items-center justify-center py-10 text-destructive">
+                <AlertTriangle className="h-6 w-6 mr-3" />
+                Erro ao carregar logs de auditoria
+              </div>
+            )}
+
+            {/* Table */}
+            {!isLoading && !isError && (
+              <div className="rounded-md border border-white/10 overflow-hidden">
+                <Table>
+                  <TableHeader>
+                    <TableRow className="hover:bg-muted/50">
+                      <TableHead>Data/Hora</TableHead>
+                      <TableHead>Usuário</TableHead>
+                      <TableHead>Ação</TableHead>
+                      <TableHead>Descrição</TableHead>
+                      <TableHead>Empresa</TableHead>
+                      <TableHead>Severidade</TableHead>
+                      <TableHead className="text-right">Ações</TableHead>
                     </TableRow>
-                  ))}
-                </TableBody>
-              </Table>
-            </div>
+                  </TableHeader>
+                  <TableBody>
+                    {logs.map((log) => {
+                      const severity = getSeverityFromAction(log.action);
+                      return (
+                        <TableRow key={log.id} className="hover:bg-muted/30 transition-colors">
+                          <TableCell>
+                            <div className="text-sm">
+                              {formatTimestamp(log.createdAt)}
+                            </div>
+                          </TableCell>
+                          <TableCell>
+                            <div className="font-medium">
+                              {log.author ? `${log.author.name} (${log.author.role})` : 'Sistema'}
+                            </div>
+                          </TableCell>
+                          <TableCell>
+                            <Badge variant="outline" className="font-mono">
+                              {actionTypes[log.action] || log.action}
+                            </Badge>
+                          </TableCell>
+                          <TableCell>
+                            <div className="max-w-xs truncate">{getActionDescription(log)}</div>
+                          </TableCell>
+                          <TableCell>
+                            <div className="text-sm">{log.company?.name || <span className="italic text-muted-foreground">N/A</span>}</div>
+                          </TableCell>
+                          <TableCell>
+                            <Badge className={severityColors[severity]}>
+                              {getSeverityIcon(severity)}
+                              <span className="ml-1 capitalize">{severity}</span>
+                            </Badge>
+                          </TableCell>
+                          <TableCell className="text-right">
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              onClick={() => setSelectedLog(log)}
+                              className="hover:bg-muted/50"
+                            >
+                              <Eye className="h-4 w-4" />
+                            </Button>
+                          </TableCell>
+                        </TableRow>
+                      );
+                    })}
+                  </TableBody>
+                </Table>
+              </div>
+            )}
+            {!isLoading && !isError && logs.length > 0 && (
+              <SimplePagination
+                page={page}
+                pageSize={pageSize}
+                totalCount={totalCount}
+                onPageChange={setPage}
+              />
+            )}
           </CardContent>
         </Card>
 
@@ -349,26 +343,24 @@ export default function AuditSystem() {
                 <div className="grid grid-cols-2 gap-4">
                   <div>
                     <label className="text-sm font-medium text-muted-foreground">Data/Hora</label>
-                    <p className="font-medium">{formatTimestamp(selectedLog.timestamp)}</p>
+                    <p className="font-medium">{formatTimestamp(selectedLog.createdAt)}</p>
                   </div>
                   <div>
                     <label className="text-sm font-medium text-muted-foreground">Usuário</label>
-                    <p className="font-medium">{selectedLog.user}</p>
+                    <p className="font-medium">
+                      {selectedLog.author ? `${selectedLog.author.name} (${selectedLog.author.role})` : 'Sistema'}
+                    </p>
                   </div>
                   <div>
                     <label className="text-sm font-medium text-muted-foreground">Empresa</label>
-                    <p className="font-medium">{selectedLog.company}</p>
+                    <p className="font-medium">{selectedLog.company?.name || 'Empresa Removida'}</p>
                   </div>
                   <div>
-                    <label className="text-sm font-medium text-muted-foreground">Severidade</label>
-                    <Badge className={severityColors[selectedLog.severity as keyof typeof severityColors]}>
-                      {selectedLog.severity}
+                    <label className="text-sm font-medium text-muted-foreground">Ação</label>
+                    <Badge variant="outline">
+                      {actionTypes[selectedLog.action] || selectedLog.action}
                     </Badge>
                   </div>
-                </div>
-                <div>
-                  <label className="text-sm font-medium text-muted-foreground">Descrição</label>
-                  <p className="font-medium">{selectedLog.description}</p>
                 </div>
                 <div>
                   <label className="text-sm font-medium text-muted-foreground">Detalhes Adicionais</label>

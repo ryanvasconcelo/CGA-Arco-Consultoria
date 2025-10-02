@@ -1,6 +1,6 @@
 // src/services/companyService.ts
 
-import api from '../lib/api'; // Supondo que você tenha um arquivo 'api.ts' que exporta uma instância do axios já configurada com a baseURL e interceptors. Se não tiver, pode usar o axios diretamente.
+import { api } from '@/lib/api';
 
 // Definimos uma interface para o tipo de dado que esperamos receber.
 // Isso nos dará autocomplete e segurança de tipo.
@@ -9,21 +9,21 @@ export interface Company {
     id: string;
     name: string;
     cnpj: string;
-    services: string[];      // Adicionado
-    usersCount: number;      // Adicionado
-    createdAt: string;       // Adicionado
-    logoUrl?: string;        // Adicionado (opcional)
-    customColors?: {         // Adicionado (opcional)
-        primary: string;
-        secondary: string;
-    };
+    products: { productId: string }[];
+    usersCount: number;
+    createdAt: string;
+    logoUrl?: string;
+    primaryColor?: string;
+    secondaryColor?: string;
 }
 
 // A função assíncrona que busca os dados.
-export const fetchCompanies = async (): Promise<Company[]> => {
+export const fetchCompanies = async (page: number, pageSize: number): Promise<{ data: Company[], totalCount: number }> => {
     try {
         // Faz a chamada GET para o seu endpoint do backend.
-        const response = await api.get('/companies');
+        const response = await api.get('/companies', {
+            params: { page, pageSize }
+        });
         // A boa prática é retornar apenas os dados da resposta.
         return response.data;
     } catch (error) {
@@ -36,26 +36,48 @@ export const fetchCompanies = async (): Promise<Company[]> => {
 };
 
 // A função que recebe os dados do formulário e envia para a API
-export const createCompany = async (companyData: FormData) => {
+// src/services/companyService.ts
+export const createCompany = async (companyData: any) => {
+    const formData = new FormData();
+    formData.append('name', companyData.name);
+    formData.append('cnpj', companyData.cnpj.replace(/[^\d]/g, ''));
+
+    if (companyData.logo) {
+        formData.append('logo', companyData.logo);
+    }
+
     try {
-        // Usamos o método POST para criar um novo recurso.
-        const response = await api.post('/companies', companyData);
+        // NÃO precisa do Content-Type, o axios detecta automaticamente
+        const response = await api.post('/companies', formData);
         return response.data;
     } catch (error) {
         console.error('Erro ao criar empresa:', error);
-        // Lançamos o erro para o useMutation saber que falhou.
-        throw new Error('Falha ao criar empresa');
+        throw error;
     }
 };
 
-export const updateCompany = async ({ id, companyData }: { id: string, companyData: FormData }) => {
-    try {
-        // Note o uso de `api.put` e a inclusão do ID na URL.
-        // O seu endpoint pode ser PUT ou PATCH, ajuste conforme sua API.
+export const updateCompany = async ({ id, companyData }: { id: string, companyData: any }) => {
+    // Verifica se tem logo para upload
+    if (companyData.logo instanceof File) {
+        const formData = new FormData();
+        formData.append('name', companyData.name);
+        formData.append('cnpj', companyData.cnpj.replace(/[^\d]/g, ''));
+        formData.append('logo', companyData.logo);
+
+        const response = await api.put(`/companies/${id}`, formData);
+        return response.data;
+    } else {
+        // Se não tem logo, envia como JSON
         const response = await api.put(`/companies/${id}`, companyData);
         return response.data;
+    }
+};
+
+export const deleteCompany = async (id: string): Promise<void> => {
+    try {
+        await api.delete(`/companies/${id}`);
     } catch (error) {
-        console.error(`Erro ao atualizar empresa com ID ${id}:`, error);
-        throw new Error('Falha ao atualizar empresa');
+        console.error(`Erro ao remover empresa ${id}:`, error);
+        throw error;
     }
 };
