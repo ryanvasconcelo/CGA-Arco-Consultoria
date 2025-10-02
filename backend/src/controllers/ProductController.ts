@@ -4,14 +4,12 @@ import { PrismaClient } from '@prisma/client';
 const prisma = new PrismaClient();
 
 class ProductController {
-    // Lista todos os produtos (acesso para SUPER_ADMIN)
     public async index(req: Request, res: Response): Promise<Response> {
-        // CORRIGIDO: Deve buscar em 'prisma.product'
-        const products = await prisma.product.findMany();
+        const products = await prisma.product.findMany({
+            orderBy: { name: 'asc' }
+        });
         return res.json(products);
     }
-
-    // Não precisamos de create, update ou delete aqui, pois são fixos.
 }
 
 export default new ProductController();

@@ -2,6 +2,12 @@
 
 import { api } from '@/lib/api';
 
+// Função para buscar todos os produtos do sistema (para formulários)
+export const fetchAllProducts = async () => {
+  const response = await api.get('/products');
+  return response.data;
+};
+
 // Definimos uma interface para o tipo de dado que esperamos receber.
 // Isso nos dará autocomplete e segurança de tipo.
 // Baseie-se no seu schema.prisma para os campos corretos.

@@ -8,24 +8,59 @@ const prisma = new PrismaClient();
 class UserController {
     // backend/src/controllers/UserController.ts
     public async index(req: Request, res: Response): Promise<Response> {
-        const users = await prisma.user.findMany({
-            orderBy: { name: 'asc' },
-            // --- ADICIONE ESTE BLOCO 'include' ---
-            include: {
-                company: {
-                    include: {
-                        products: true,
-                    }
-                }
-            }
-        });
-        // Remove a senha de todos os usuários antes de enviar
-        const usersWithoutPassword = users.map(user => {
-            const { password, ...userWithoutPass } = user;
-            return userWithoutPass;
-        });
+        const { page = '1', pageSize = '10', searchTerm } = req.query;
+        const pageNumber = parseInt(page as string, 10);
+        const size = parseInt(pageSize as string, 10);
 
-        return res.json(usersWithoutPassword);
+        const authenticatedUser = req.user;
+
+        // Constrói a cláusula 'where' dinamicamente
+        const whereClause: Prisma.UserWhereInput = {};
+
+        // REGRA: ADMIN só pode ver usuários da sua própria empresa.
+        if (authenticatedUser?.role === 'ADMIN') {
+            whereClause.companyId = authenticatedUser.companyId;
+        }
+
+        // Adiciona filtro de busca se o searchTerm for fornecido
+        if (searchTerm && typeof searchTerm === 'string') {
+            whereClause.OR = [
+                { name: { contains: searchTerm, mode: 'insensitive' } },
+                { email: { contains: searchTerm, mode: 'insensitive' } },
+            ];
+        }
+
+        try {
+            const [users, totalCount] = await prisma.$transaction([
+                prisma.user.findMany({
+                    where: whereClause,
+                    skip: (pageNumber - 1) * size,
+                    take: size,
+                    orderBy: { name: 'asc' },
+                    include: {
+                        company: true, // Inclui os dados da empresa
+                        userProducts: { // Inclui os produtos associados ao usuário
+                            include: {
+                                companyProduct: {
+                                    include: {
+                                        product: true
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }),
+                prisma.user.count({ where: whereClause })
+            ]);
+
+            // Remove a senha de todos os usuários antes de enviar
+            const usersWithoutPassword = users.map(({ password, ...user }) => user);
+
+            return res.json({ data: usersWithoutPassword, totalCount });
+        } catch (error) {
+            console.error("Erro ao listar usuários:", error);
+            return res.status(500).json({ error: "Falha ao buscar usuários." });
+        }
     }
 
     // backend/src/controllers/UserController.ts

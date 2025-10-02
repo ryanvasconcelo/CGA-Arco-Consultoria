@@ -62,11 +62,11 @@ export default function UserManagement() {
 
   // A query de companies continua, mas só para o SUPER_ADMIN
   const isAdminOrSuperAdmin = currentUser?.role === 'ADMIN' || currentUser?.role === 'SUPER_ADMIN';
-  // CORREÇÃO: A função fetchCompanies agora espera paginação. Como queremos todos os dados para o dropdown,
-  // passamos valores altos para page e pageSize para buscar todos os registros em uma única chamada.
+  // A função fetchCompanies espera paginação. Para o formulário, precisamos de todas as empresas.
+  // Passamos valores altos para 'page' e 'pageSize' para buscar todos os registros de uma vez.
   const { data: companiesForForm, isLoading: isLoadingCompanies } = useQuery({
     queryKey: ['all-companies-for-form'],
-    queryFn: () => fetchCompanies(1, 9999), // Busca todas as empresas para o formulário
+    queryFn: () => fetchCompanies(1, 9999), // Busca até 9999 empresas
     // Habilita a query se o usuário for ADMIN ou SUPER_ADMIN
     enabled: isAdminOrSuperAdmin,
   });
@@ -217,11 +217,11 @@ export default function UserManagement() {
                               </Button>
                             </DropdownMenuTrigger>
                             <DropdownMenuContent align="end" className="glass-card border-white/10">
-                              <DropdownMenuItem onSelect={(e) => e.preventDefault()} onClick={() => handleEditUser(user)} className="cursor-pointer">
+                              <DropdownMenuItem onClick={() => handleEditUser(user)} className="cursor-pointer">
                                 <Edit2 className="mr-2 h-4 w-4" />
                                 Editar
                               </DropdownMenuItem>
-                              <DropdownMenuItem onSelect={(e) => e.preventDefault()} onClick={() => handleToggleStatus(user.id)} className="cursor-pointer">
+                              <DropdownMenuItem onClick={() => handleToggleStatus(user.id)} className="cursor-pointer">
                                 <Eye className="mr-2 h-4 w-4" />
                                 {user.status === "active" ? "Desativar" : "Ativar"}
                               </DropdownMenuItem>

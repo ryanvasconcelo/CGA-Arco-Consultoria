@@ -7,26 +7,40 @@ const api = axios.create({
 });
 
 // Interceptor para adicionar o token JWT a cada requisição
-// O interceptor de request não é mais necessário aqui,
-// pois o AuthContext agora gerencia o token diretamente
-// na instância do axios. Isso evita race conditions.
+api.interceptors.request.use(
+  (config) => {
+    const token = localStorage.getItem('@CGA:token');
+    console.log('🔑 [API Request] Token encontrado:', token ? 'SIM' : 'NÃO');
+    console.log('🔑 [API Request] URL:', config.url);
+    if (token) {
+      config.headers.Authorization = `Bearer ${token}`;
+      console.log('✅ [API Request] Token adicionado ao header');
+    } else {
+      console.log('⚠️ [API Request] Sem token - requisição sem autenticação');
+    }
+    return config;
+  },
+  (error) => {
+    return Promise.reject(error);
+  }
+);
 
-// --- ADICIONADO: Interceptor de Resposta para tratar erros 401 ---
-// Este interceptor vai "escutar" as respostas da API.
+// Interceptor de Resposta para tratar erros 401
 api.interceptors.response.use(
-  // Se a resposta for bem-sucedida (status 2xx), apenas a retorna.
-  (response) => response,
-  // Se ocorrer um erro...
-  (error) => { // A função de erro começa aqui
+  (response) => {
+    console.log('✅ [API Response] Sucesso:', response.config.url);
+    return response;
+  },
+  (error) => {
+    console.log('❌ [API Response] Erro:', error.config?.url, 'Status:', error.response?.status);
     // Verificamos se o erro é um 401 (Unauthorized) e não é na rota de login.
     if (error.response?.status === 401 && !error.config.url.endsWith('/sessions')) {
-      // Em vez de redirecionar aqui, disparamos um evento customizado.
-      // O AuthContext vai "ouvir" este evento e cuidar do logout.
-      // Isso quebra a dependência circular.
+      console.log('🚪 [API Response] 401 detectado - Disparando evento de logout');
+      // Dispara evento customizado para o AuthContext tratar o logout
       window.dispatchEvent(new Event('unauthorized'));
     }
-    return Promise.reject(error); // O erro é repassado para o React Query/código que fez a chamada
-  } // E termina aqui
+    return Promise.reject(error);
+  }
 );
 
 // Instância do Axios para requisições públicas/não autenticadas (ex: login, cadastro, esqueci a senha)

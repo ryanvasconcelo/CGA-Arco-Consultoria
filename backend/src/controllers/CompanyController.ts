@@ -26,6 +26,7 @@ class CompanyController {
                 take: size,
                 orderBy: { name: 'asc' },
                 select: {
+                    // Seleciona os campos que o frontend precisa
                     id: true,
                     name: true,
                     cnpj: true,
@@ -33,11 +34,13 @@ class CompanyController {
                     createdAt: true,
                     updatedAt: true,
                     products: {
+                        // Inclui a relação com os produtos
                         include: {
-                            product: true
+                            product: true // E os detalhes de cada produto
                         }
                     },
                     _count: {
+                        // Conta quantos usuários a empresa tem
                         select: { users: true }
                     }
                 }
@@ -117,7 +120,16 @@ class CompanyController {
             return res.status(403).json({ error: 'Acesso negado. Você só pode visualizar sua própria empresa.' });
         }
 
-        const company = await prisma.company.findUnique({ where: { id } });
+        const company = await prisma.company.findUnique({
+            where: { id },
+            include: {
+                products: { // Inclui a lista de serviços associados
+                    include: {
+                        product: true // E os detalhes de cada produto
+                    }
+                }
+            }
+        });
         if (!company) {
             return res.status(404).json({ error: 'Empresa não encontrada.' });
         }
@@ -155,6 +167,21 @@ class CompanyController {
             // REGRA: Apenas SUPER_ADMIN pode editar os serviços
             if (services && authenticatedUser.role === 'SUPER_ADMIN') {
                 const serviceIds = typeof services === 'string' ? JSON.parse(services) : services;
+
+                // --- VALIDAÇÃO ADICIONADA ---
+                // Verifica se todos os IDs de serviço fornecidos existem no banco de dados.
+                const existingProducts = await prisma.product.findMany({
+                    where: { id: { in: serviceIds } },
+                    select: { id: true }
+                });
+                const existingProductIds = existingProducts.map(p => p.id);
+                const invalidIds = serviceIds.filter((id: string) => !existingProductIds.includes(id));
+
+                if (invalidIds.length > 0) {
+                    return res.status(400).json({
+                        error: `Os seguintes IDs de serviço são inválidos ou não existem: ${invalidIds.join(', ')}`
+                    });
+                }
 
                 // Lógica segura para atualizar serviços
                 const currentProducts = await prisma.companyProduct.findMany({

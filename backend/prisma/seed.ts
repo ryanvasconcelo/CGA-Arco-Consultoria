@@ -131,13 +131,15 @@ async function main() {
     const guardControlProduct = await prisma.product.findUnique({ where: { name: 'Guard Control' } });
 
     if (arcoPortusProduct && guardControlProduct) {
+        // Associa Arco Portus a TODAS as empresas e Guard Control apenas à Pato's Company
         await prisma.companyProduct.createMany({
             data: [
                 { companyId: patosCompany.id, productId: arcoPortusProduct.id },
                 { companyId: patosCompany.id, productId: guardControlProduct.id },
+                { companyId: systemCompany.id, productId: arcoPortusProduct.id }, // Garante que a empresa do sistema também tenha Arco Portus
             ]
         });
-        console.log(`Serviços associados à ${patosCompany.name}`);
+        console.log(`Serviços associados às empresas de teste.`);
     } else {
         console.warn('Não foi possível associar serviços. Produtos não encontrados.');
     }

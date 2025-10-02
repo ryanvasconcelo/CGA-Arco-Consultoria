@@ -1,6 +1,7 @@
 import { useState, useEffect, useMemo } from "react";
-import { useMutation, useQueryClient } from '@tanstack/react-query';
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { createUser, updateUser } from '@/services/userService';
+import { fetchAllProducts } from '@/services/companyService';
 import { toast } from "sonner";
 import { X, Save, UserPlus, Building2, Shield, Lock } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -17,23 +18,24 @@ interface EnhancedUserFormProps {
   onClose: () => void;
 }
 
-const allSystemServices = [
-  { id: "6f23e9ed-fb73-40b2-8503-d162b912ee87", name: "Arco Portus" },
-  { id: "7f650a42-d0e8-4ab4-89aa-af3b32dbbd88", name: "ACCIA" },
-  { id: "f2271d76-88fd-4c35-b4dc-683de7187643", name: "GuardControl" },
-  { id: "00cf8fde-c581-424e-8610-3ccbf12c338f", name: "ArcoView" },
-  { id: "2546aaf3-402a-466a-888a-ea003a621626", name: "ArcoMoki" },
-  { id: "88a98456-fcae-498e-8c01-72dc247b34de", name: "UNICASP" }
-];
-const arcoPortusId = allSystemServices.find(s => s.name === "Arco Portus")?.id || "";
-
-
 export function EnhancedUserForm({
   user,
   currentUser,
   availableCompanies = [],
   onClose,
 }: EnhancedUserFormProps) {
+  // Busca todos os produtos do sistema dinamicamente
+  const { data: allSystemServices = [], isLoading: isLoadingServices } = useQuery({
+    queryKey: ['all-products'],
+    queryFn: fetchAllProducts,
+  });
+
+  // Calcula o ID do Arco Portus dinamicamente
+  const arcoPortusId = useMemo(() => {
+    const service = allSystemServices.find((s: any) => s.name === "Arco Portus");
+    return service ? service.id : "";
+  }, [allSystemServices]);
+
   const [formData, setFormData] = useState({
     name: "", email: "", role: "USER", status: "ACTIVE", companyId: "",
     services: [] as string[],
@@ -90,7 +92,10 @@ export function EnhancedUserForm({
         role: user.role || "USER",
         status: user.status || "ACTIVE",
         companyId: user.company?.id || "",
-        services: user.userProducts?.map((up: any) => up.companyProduct.productId) || [],
+        // CORREÇÃO: Acessa o ID do produto na estrutura correta retornada pela API.
+        // A API retorna userProducts -> companyProduct -> product -> id.
+        // Adicionamos '?' para segurança caso algum objeto seja nulo.
+        services: user.userProducts?.map((up: any) => up.companyProduct?.product?.id).filter(Boolean) || [],
         arcoPortusPermissions: initialPermissions,
       });
     } else if (isAdmin && currentUser?.company?.id) {
@@ -99,12 +104,21 @@ export function EnhancedUserForm({
     }
   }, [user, isAdmin, currentUser?.company?.id]);
 
+  // Este hook é a chave para a funcionalidade.
+  // Ele reage à mudança da empresa selecionada no formulário.
   const servicesToShow = useMemo(() => {
     if (!formData.companyId) return [];
+    // Encontra a empresa selecionada na lista de empresas disponíveis.
     const selectedCompany = availableCompanies.find(c => c.id === formData.companyId);
-    if (!selectedCompany?.products) return [];
-    const contractedProductIds = selectedCompany.products.map((p: any) => p.productId);
-    return allSystemServices.filter(service => contractedProductIds.includes(service.id));
+    // Se a empresa não for encontrada ou não tiver produtos, retorna um array vazio.
+    if (!selectedCompany || !Array.isArray(selectedCompany.products)) return [];
+
+    // CORREÇÃO: Acessa o ID do produto dentro do objeto aninhado 'product'.
+    // A API retorna `products: [{ ..., product: { id: '...' } }]`
+    const contractedProductIds = selectedCompany.products.map((companyProduct: any) => companyProduct.product.id);
+
+    // Filtra a lista de todos os serviços do sistema, mostrando apenas os que a empresa contratou.
+    return allSystemServices.filter((service: any) => contractedProductIds.includes(service.id));
   }, [formData.companyId, availableCompanies]);
 
   const queryClient = useQueryClient();

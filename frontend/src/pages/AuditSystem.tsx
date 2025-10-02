@@ -37,6 +37,8 @@ const actionTypes: Record<string, string> = {
   DISASSOCIATE_USER_FROM_PRODUCT: "Desassociar Usuário de Produto",
   ASSOCIATE_USER_TO_PERMISSION: "Conceder Permissão",
   DISASSOCIATE_USER_FROM_PERMISSION: "Revogar Permissão",
+  LOGIN_SUCCESS: "Login Bem-Sucedido",
+  CHANGE_PASSWORD: "Troca de Senha",
 };
 
 const getSeverityFromAction = (action: string): string => {
@@ -93,27 +95,11 @@ export default function AuditSystem() {
   };
 
   const getActionDescription = (log: any): string => {
-    const actionName = actionTypes[log.action] || log.action;
-    const userName = log.details?.userName || 'Sistema';
-    // CORREÇÃO: Adiciona verificação para log.company antes de acessar .name
-    const companyName = log.details?.companyName || log.company?.name || 'Empresa Removida';
-
-    switch (log.action) {
-      case 'CREATE_USER':
-        return `Criou o usuário ${userName}`;
-      case 'UPDATE_USER':
-        return `Atualizou o usuário ${userName}`;
-      case 'DELETE_USER':
-        return `Removeu o usuário ${userName}`;
-      case 'CREATE_COMPANY':
-        return `Criou a empresa ${companyName}`;
-      case 'UPDATE_COMPANY':
-        return `Atualizou a empresa ${companyName}`;
-      case 'DELETE_COMPANY':
-        return `Removeu a empresa ${companyName}`;
-      default:
-        return actionName;
-    }
+    // Simplificando a descrição para usar os detalhes do log diretamente.
+    // O backend já fornece o autor e a empresa.
+    const detailsMessage = log.details?.message || actionTypes[log.action] || log.action;
+    const target = log.details?.targetUser || log.details?.targetCompany;
+    return target ? `${detailsMessage} (Alvo: ${target})` : detailsMessage;
   };
 
   return (
@@ -285,7 +271,7 @@ export default function AuditSystem() {
                             </Badge>
                           </TableCell>
                           <TableCell>
-                            <div className="max-w-xs truncate">{getActionDescription(log)}</div>
+                            <div className="max-w-xs truncate" title={getActionDescription(log)}>{getActionDescription(log)}</div>
                           </TableCell>
                           <TableCell>
                             <div className="text-sm">{log.company?.name || <span className="italic text-muted-foreground">N/A</span>}</div>

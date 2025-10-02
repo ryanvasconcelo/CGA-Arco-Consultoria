@@ -1,16 +1,15 @@
 // frontend/src/components/Header.tsx
 import { Menu } from "lucide-react";
+import { Link, useLocation } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { UserProfileCard } from "@/components/UserProfileCard";
 import CgaLogo from "../assets/cga-logo.png";
-import { useAuth } from "@/contexts/AuthContext"; // 1. Importamos o hook de autenticação
+import { useAuth } from "@/contexts/AuthContext";
 
 const Header = () => {
-  // 2. Pegamos o usuário e a função de logout do nosso contexto global
   const { user, signOut } = useAuth();
+  const location = useLocation();
 
-  // 3. Adicionamos uma "guarda". Se o usuário ainda não foi carregado, não mostramos nada.
-  //    Isso previne erros no primeiro carregamento da página.
   if (!user) {
     return null;
   }
@@ -19,58 +18,68 @@ const Header = () => {
     <header className="bg-card border-b border-border sticky top-0 z-50 backdrop-blur-sm">
       <div className="container mx-auto px-4 py-4">
         <div className="flex items-center justify-between">
-          {/* Logo - Mantido o seu */}
+          {/* Logo */}
           <div className="flex items-center space-x-2">
-            <img src={CgaLogo} alt="Logo CGA" className="w-32" />
+            <Link to="/">
+              <img src={CgaLogo} alt="Logo CGA" className="w-32 cursor-pointer" />
+            </Link>
           </div>
 
           {/* Navigation */}
           <nav className="hidden md:flex items-center space-x-8">
-            <a
-              href="/"
-              className={`transition-colors font-medium ${window.location.pathname === '/'
+            <Link
+              to="/"
+              className={`transition-colors font-medium ${location.pathname === '/'
                 ? 'text-primary border-b-2 border-primary'
                 : 'text-foreground hover:text-primary'
                 }`}
             >
               INÍCIO
-            </a>
-            <a
-              href="/admin/users"
-              className={`transition-colors font-medium ${window.location.pathname === '/admin/users'
-                ? 'text-primary border-b-2 border-primary'
-                : 'text-foreground hover:text-primary'
-                }`}
-            >
-              GESTÃO DE ATIVOS
-            </a>
-            <a
-              href="/catalogo-solucoes"
-              className={`transition-colors font-medium ${window.location.pathname === '/catalogo-solucoes'
-                ? 'text-primary border-b-2 border-primary'
-                : 'text-foreground hover:text-primary'
-                }`}
-            >
-              CATÁLOGO DE SOLUÇÕES
-            </a>
-            <a
-              href="/canal-denuncias"
-              className={`transition-colors font-medium ${window.location.pathname === '/canal-denuncias'
-                ? 'text-primary border-b-2 border-primary'
-                : 'text-foreground hover:text-primary'
-                }`}
-            >
-              CANAL DE DENÚNCIAS
-            </a>
-            <a
-              href="/contato"
-              className={`transition-colors font-medium ${window.location.pathname === '/contato'
-                ? 'text-primary border-b-2 border-primary'
-                : 'text-foreground hover:text-primary'
-                }`}
-            >
-              FALE CONOSCO
-            </a>
+            </Link>
+            {(user.role === 'ADMIN' || user.role === 'SUPER_ADMIN') && (
+              <Link
+                to="/admin/users"
+                className={`transition-colors font-medium ${location.pathname === '/admin/users'
+                  ? 'text-primary border-b-2 border-primary'
+                  : 'text-foreground hover:text-primary'
+                  }`}
+              >
+                GESTÃO DE ATIVOS
+              </Link>
+            )}
+            {(user.role === 'ADMIN' || user.role === 'SUPER_ADMIN') && (
+              <Link
+                to="/catalogo-solucoes"
+                className={`transition-colors font-medium ${location.pathname === '/catalogo-solucoes'
+                  ? 'text-primary border-b-2 border-primary'
+                  : 'text-foreground hover:text-primary'
+                  }`}
+              >
+                CATÁLOGO DE SOLUÇÕES
+              </Link>
+            )}
+            {(user.role === 'ADMIN' || user.role === 'SUPER_ADMIN') && (
+              <Link
+                to="/canal-denuncias"
+                className={`transition-colors font-medium ${location.pathname === '/canal-denuncias'
+                  ? 'text-primary border-b-2 border-primary'
+                  : 'text-foreground hover:text-primary'
+                  }`}
+              >
+                CANAL DE DENÚNCIAS
+              </Link>
+            )}
+            {(user.role === 'ADMIN' || user.role === 'SUPER_ADMIN') && (
+              <Link
+                to="/contato"
+                className={`transition-colors font-medium ${location.pathname === '/contato'
+                  ? 'text-primary border-b-2 border-primary'
+                  : 'text-foreground hover:text-primary'
+                  }`}
+              >
+                FALE CONOSCO
+              </Link>
+            )}
           </nav>
 
           {/* Profile and Actions */}

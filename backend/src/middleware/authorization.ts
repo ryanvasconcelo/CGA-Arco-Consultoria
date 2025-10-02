@@ -10,15 +10,16 @@ const prisma = new PrismaClient();
  */
 export function checkRole(allowedRoles: Role[]) {
     return async (req: Request, res: Response, next: NextFunction) => {
-        // O userId é adicionado pelo authMiddleware que já criamos
-        const { userId } = req;
+        // O user é adicionado pelo authMiddleware
+        const authenticatedUser = req.user;
 
-        if (!userId) {
+        if (!authenticatedUser) {
             return res.status(401).json({ error: 'Usuário não autenticado.' });
         }
 
         try {
-            const user = await prisma.user.findUnique({ where: { id: userId } });
+            // Busca o usuário completo do banco usando o ID do token
+            const user = await prisma.user.findUnique({ where: { id: authenticatedUser.sub } });
 
             if (!user) {
                 return res.status(401).json({ error: 'Usuário não encontrado.' });
@@ -29,8 +30,8 @@ export function checkRole(allowedRoles: Role[]) {
                 return res.status(403).json({ error: 'Acesso negado. Permissões insuficientes.' });
             }
 
-            // Anexa o objeto do usuário inteiro ao request para usarmos no controller
-            req.user = user;
+            // Anexa o objeto do usuário completo ao request para usar no controller
+            req.user = user as any;
 
             return next();
         } catch (error) {
