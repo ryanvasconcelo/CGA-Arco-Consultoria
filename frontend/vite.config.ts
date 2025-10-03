@@ -10,21 +10,22 @@ export default defineConfig({
     },
   },
   server: {
-    host: '0.0.0.0', // Escuta em todas as interfaces
+    host: '0.0.0.0',
     port: 5173,
     strictPort: true,
     allowedHosts: [
       'cga.pktech.ai',
       'localhost',
-      '.pktech.ai' // Permite todos os subdomínios
+      '.pktech.ai'
     ],
-    // Proxy não é necessário em produção pois o Traefik roteia as requisições
-    // Em desenvolvimento local, descomente e ajuste se necessário:
-    // proxy: {
-    //   '/api': {
-    //     target: 'http://backend:3333',
-    //     changeOrigin: true,
-    //   }
-    // }
+    // Em desenvolvimento local, o proxy é NECESSÁRIO.
+    // Descomentei e corrigi o target para você.
+    proxy: { // <-- 1. BLOCO DESCOMENTADO
+      '/api': {
+        // 2. TARGET CORRIGIDO PARA 'localhost'
+        target: 'http://localhost:3333',
+        changeOrigin: true,
+      }
+    }
   },
 })
