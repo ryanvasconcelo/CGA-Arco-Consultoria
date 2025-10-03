@@ -43,23 +43,33 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     }, []);
 
     const signIn = async ({ email, password }) => {
-        // Use a instância PÚBLICA para o login
-        const response = await apiPublic.post('/sessions', { email, password });
+        // --- LOG 1: Início da Tentativa de Login ---
+        console.log(`[FRONTEND LOG] Tentando fazer login para o email: ${email}`);
 
-        // Verifica se o backend retornou requiresPasswordReset
-        if (response.data.requiresPasswordReset) {
-            // Lança um erro com a estrutura esperada pelo Login.tsx
-            const error: any = new Error('Password reset required');
-            error.response = { data: response.data };
+        try {
+            // Use a instância PÚBLICA para o login
+            const response = await apiPublic.post('/sessions', { email, password });
+
+            // ... (verificação de requiresPasswordReset)
+
+            const { user: apiUser, token } = response.data;
+
+            localStorage.setItem('@CGA:user', JSON.stringify(apiUser));
+            localStorage.setItem('@CGA:token', token);
+
+            setUser(apiUser);
+
+            // --- LOG 2: Login Bem-sucedido ---
+            console.log('[FRONTEND LOG] Login realizado com sucesso. Dados recebidos:', response.data);
+
+        } catch (error) {
+            // --- LOG 3: Falha no Login ---
+            // Este log é crucial, pois mostrará o erro retornado pelo servidor (ex: 401)
+            console.error('[FRONTEND LOG] Falha ao tentar fazer login. Erro:', error.response?.data || error.message);
+
+            // Re-lança o erro para que o componente de Login possa tratá-lo (ex: mostrar uma mensagem na tela)
             throw error;
         }
-
-        const { user: apiUser, token } = response.data;
-
-        localStorage.setItem('@CGA:user', JSON.stringify(apiUser));
-        localStorage.setItem('@CGA:token', token);
-
-        setUser(apiUser);
     };
 
     const signOut = () => {
