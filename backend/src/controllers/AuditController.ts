@@ -32,7 +32,7 @@ class AuditController {
             // ADMIN só pode ver logs da sua empresa
             if (authenticatedUser.role === 'ADMIN') {
                 conditions.push({ companyId: authenticatedUser.companyId });
-                conditions.push({ author: { role: { not: 'SUPER_ADMIN' } } });
+                // ADMIN deve ver TODOS os logs da sua empresa
             } else if (authenticatedUser.role === 'SUPER_ADMIN' && req.query.companyId) {
                 // SUPER_ADMIN pode filtrar por empresa específica
                 conditions.push({ companyId: req.query.companyId as string });
@@ -184,15 +184,8 @@ class AuditController {
 
             // ADMIN só pode ver estatísticas da sua empresa
             if (authenticatedUser.role === 'ADMIN') {
-                whereClause.AND = [
-                    { companyId: authenticatedUser.companyId },
-                    {
-                        // E o autor do log não pode ser um SUPER_ADMIN
-                        author: {
-                            role: { not: 'SUPER_ADMIN' }
-                        }
-                    }
-                ];
+                whereClause.companyId = authenticatedUser.companyId;
+                // REMOVIDO: Filtro que bloqueava logs de SUPER_ADMIN nas estatísticas
             }
 
             // Total de eventos

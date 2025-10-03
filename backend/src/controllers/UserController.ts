@@ -2,6 +2,7 @@
 import { Request, Response } from 'express';
 import { PrismaClient, Prisma } from '@prisma/client';
 import bcrypt from 'bcryptjs';
+import { createAuditLog } from '../helpers/auditLogger';
 
 const prisma = new PrismaClient();
 
@@ -133,6 +134,22 @@ class UserController {
                 },
             });
 
+            // Cria log de auditoria
+            const authenticatedUser = req.user;
+            if (authenticatedUser) {
+                await createAuditLog({
+                    action: 'CREATE_USER',
+                    authorId: authenticatedUser.sub,
+                    companyId: companyId,
+                    details: {
+                        message: `Usuário ${name} foi criado`,
+                        targetUser: name,
+                        targetUserEmail: email,
+                        targetUserRole: role,
+                    },
+                });
+            }
+
             const { password, ...userWithoutPassword } = user;
             return res.status(201).json(userWithoutPassword);
 
@@ -200,6 +217,19 @@ class UserController {
                 }
             });
 
+            // Cria log de auditoria
+            await createAuditLog({
+                action: 'UPDATE_USER',
+                authorId: authenticatedUser.sub,
+                companyId: userToUpdate.companyId,
+                details: {
+                    message: `Usuário ${name} foi atualizado`,
+                    targetUser: name,
+                    targetUserEmail: email,
+                    changes: { name, email, role, status },
+                },
+            });
+
             const { password, ...userWithoutPassword } = updatedUser;
             return res.json(userWithoutPassword);
 
@@ -264,10 +294,39 @@ class UserController {
             return res.status(403).json({ error: 'Ação proibida. Você não pode remover seu próprio usuário.' });
         }
 
-        // Graças ao 'onDelete: Cascade' no schema, o Prisma deletará o usuário e todos os dados dependentes.
-        await prisma.user.delete({ where: { id } });
+        try {
+            // Busca o usuário antes de deletar para ter os dados para o log
+            const userToDelete = await prisma.user.findUnique({
+                where: { id },
+                select: { name: true, email: true, companyId: true },
+            });
 
-        return res.status(204).send();
+            if (!userToDelete) {
+                return res.status(404).json({ error: 'Usuário não encontrado.' });
+            }
+
+            // Graças ao 'onDelete: Cascade' no schema, o Prisma deletará o usuário e todos os dados dependentes.
+            await prisma.user.delete({ where: { id } });
+
+            // Cria log de auditoria
+            if (authenticatedUser && userToDelete.companyId) {
+                await createAuditLog({
+                    action: 'DELETE_USER',
+                    authorId: authenticatedUser.sub,
+                    companyId: userToDelete.companyId,
+                    details: {
+                        message: `Usuário ${userToDelete.name} foi removido`,
+                        targetUser: userToDelete.name,
+                        targetUserEmail: userToDelete.email,
+                    },
+                });
+            }
+
+            return res.status(204).send();
+        } catch (error) {
+            console.error(`Erro ao deletar usuário ${id}:`, error);
+            return res.status(500).json({ error: 'Falha ao remover usuário.' });
+        }
     }
 
 }
