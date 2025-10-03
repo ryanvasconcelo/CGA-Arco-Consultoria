@@ -15,6 +15,7 @@ interface EnhancedUserFormProps {
   user?: any;
   currentUser: any;
   availableCompanies?: any[];
+  adminCompany?: any | null; // Empresa do admin logado, com todos os dados (incluindo produtos)
   onClose: () => void;
 }
 
@@ -22,6 +23,7 @@ export function EnhancedUserForm({
   user,
   currentUser,
   availableCompanies = [],
+  adminCompany,
   onClose,
 }: EnhancedUserFormProps) {
   // Busca todos os produtos do sistema dinamicamente
@@ -50,6 +52,23 @@ export function EnhancedUserForm({
   const isEditing = !!user;
   const isSuperAdmin = currentUser?.role === "SUPER_ADMIN";
   const isAdmin = currentUser?.role === "ADMIN";
+
+  // CORREÇÃO: Cria a lista correta de empresas para usar no formulário
+  const companiesForForm = useMemo(() => {
+    if (isSuperAdmin) {
+      return availableCompanies;
+    }
+    // Para ADMIN, garante que adminCompany está disponível
+    if (isAdmin && adminCompany) {
+      // Verifica se adminCompany já está em availableCompanies
+      const isAdminCompanyInList = availableCompanies.some(c => c.id === adminCompany.id);
+      if (!isAdminCompanyInList) {
+        return [adminCompany];
+      }
+      return availableCompanies;
+    }
+    return availableCompanies;
+  }, [isSuperAdmin, isAdmin, adminCompany, availableCompanies]);
 
   useEffect(() => {
     if (user) { // Se estiver editando um usuário existente
@@ -104,22 +123,25 @@ export function EnhancedUserForm({
     }
   }, [user, isAdmin, currentUser?.company?.id]);
 
-  // Este hook é a chave para a funcionalidade.
-  // Ele reage à mudança da empresa selecionada no formulário.
+  // CORREÇÃO: Usa companiesForForm em vez de availableCompanies
   const servicesToShow = useMemo(() => {
     if (!formData.companyId) return [];
-    // Encontra a empresa selecionada na lista de empresas disponíveis.
-    const selectedCompany = availableCompanies.find(c => c.id === formData.companyId);
+    
+    // Encontra a empresa selecionada na lista correta de empresas
+    const selectedCompany = companiesForForm.find(c => c.id === formData.companyId);
+    
     // Se a empresa não for encontrada ou não tiver produtos, retorna um array vazio.
     if (!selectedCompany || !Array.isArray(selectedCompany.products)) return [];
 
-    // CORREÇÃO: Acessa o ID do produto dentro do objeto aninhado 'product'.
-    // A API retorna `products: [{ ..., product: { id: '...' } }]`
-    const contractedProductIds = selectedCompany.products.map((companyProduct: any) => companyProduct.product.id);
+    // SUPORTE A AMBAS AS ESTRUTURAS:
+    // Acessa o ID do produto na estrutura correta retornada pela API
+    const contractedProductIds = selectedCompany.products.map((companyProduct: any) =>
+      companyProduct.product?.id || companyProduct.productId
+    ).filter(Boolean);
 
     // Filtra a lista de todos os serviços do sistema, mostrando apenas os que a empresa contratou.
     return allSystemServices.filter((service: any) => contractedProductIds.includes(service.id));
-  }, [formData.companyId, availableCompanies]);
+  }, [formData.companyId, companiesForForm, allSystemServices]);
 
   const queryClient = useQueryClient();
 
@@ -267,7 +289,7 @@ export function EnhancedUserForm({
                       <Label htmlFor="companyId">Selecione a Empresa</Label>
                       <select id="companyId" value={formData.companyId} onChange={(e) => handleChange("companyId", e.target.value)} className="w-full px-3 py-2 rounded-md border" required>
                         <option value="" disabled>-- Escolha uma empresa --</option>
-                        {availableCompanies.map((company) => (<option key={company.id} value={company.id}>{company.name}</option>))}
+                        {companiesForForm.map((company) => (<option key={company.id} value={company.id}>{company.name}</option>))}
                       </select>
                     </div>
                   ) : (

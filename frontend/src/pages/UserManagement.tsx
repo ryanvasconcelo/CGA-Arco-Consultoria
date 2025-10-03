@@ -61,15 +61,38 @@ export default function UserManagement() {
   }
 
   // A query de companies continua, mas só para o SUPER_ADMIN
-  const isAdminOrSuperAdmin = currentUser?.role === 'ADMIN' || currentUser?.role === 'SUPER_ADMIN';
-  // A função fetchCompanies espera paginação. Para o formulário, precisamos de todas as empresas.
-  // Passamos valores altos para 'page' e 'pageSize' para buscar todos os registros de uma vez.
+  const isSuperAdmin = currentUser?.role === 'SUPER_ADMIN';
+  const isAdmin = currentUser?.role === 'ADMIN';
+
+  // Query para SUPER_ADMIN: Busca todas as empresas para o formulário.
   const { data: companiesForForm, isLoading: isLoadingCompanies } = useQuery({
     queryKey: ['all-companies-for-form'],
     queryFn: () => fetchCompanies(1, 9999), // Busca até 9999 empresas
-    // Habilita a query se o usuário for ADMIN ou SUPER_ADMIN
-    enabled: isAdminOrSuperAdmin,
+    enabled: isSuperAdmin, // Só executa se for SUPER_ADMIN
   });
+
+  // Query específica para ADMIN: Busca os dados completos da SUA empresa incluindo produtos.
+  const { data: adminCompanyData, isLoading: isLoadingAdminCompany } = useQuery({
+    queryKey: ['admin-company-details', currentUser?.companyId],
+    queryFn: () => fetchCompanies(1, 1), // A API já filtra pelo companyId do admin
+    enabled: isAdmin && !!currentUser?.companyId, // Só executa se for ADMIN com uma empresa
+  });
+
+  // Extrai a empresa do admin dos dados retornados
+  const adminCompanyForForm = useMemo(() => {
+    if (isAdmin && adminCompanyData?.data && adminCompanyData.data.length > 0) {
+      return adminCompanyData.data[0];
+    }
+    return null;
+  }, [isAdmin, adminCompanyData]);
+
+  // Monta a lista de empresas disponíveis para o formulário de forma dinâmica.
+  const availableCompaniesForForm = isSuperAdmin
+    ? companiesForForm?.data
+    : (isAdmin && adminCompanyForForm ? [adminCompanyForForm] : []);
+
+  // Controla o estado de carregamento dependendo do tipo de usuário.
+  const isLoadingFormDependencies = isSuperAdmin ? isLoadingCompanies : isLoadingAdminCompany;
 
   const [searchTerm, setSearchTerm] = useState("");
   const [roleFilter, setRoleFilter] = useState<string>("all");
@@ -161,10 +184,10 @@ export default function UserManagement() {
                 <Button
                   onClick={handleAddUser}
                   className="gradient-primary hover-lift"
-                  disabled={isLoadingCompanies || !companiesForForm?.data}
+                  disabled={isLoadingFormDependencies}
                 >
                   <UserPlus className="mr-2 h-4 w-4" />
-                  {isLoadingCompanies ? "Carregando..." : "Novo Usuário"}
+                  {isLoadingFormDependencies ? "Carregando..." : "Novo Usuário"}
                 </Button>
               )}
             </div>
@@ -262,7 +285,8 @@ export default function UserManagement() {
         <EnhancedUserForm
           user={selectedUser}
           currentUser={currentUser}
-          availableCompanies={companiesForForm?.data || []}
+          availableCompanies={availableCompaniesForForm || []}
+          adminCompany={adminCompanyForForm}
           onClose={() => setIsUserFormOpen(false)}
         />
       )}
