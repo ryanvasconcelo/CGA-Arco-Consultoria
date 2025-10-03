@@ -48,6 +48,11 @@ class UserController {
                                     }
                                 }
                             }
+                        },
+                        permissions: { // Inclui as permissões granulares do usuário
+                            include: {
+                                permission: true // E os detalhes de cada permissão
+                            }
                         }
                     }
                 }),
@@ -161,7 +166,7 @@ class UserController {
 
     public async update(req: Request, res: Response): Promise<Response> {
         const { id } = req.params;
-        const { name, email, role, status, services } = req.body;
+        const { name, email, role, status, services, arcoPortusPermissions } = req.body;
         const authenticatedUser = req.user;
 
         try {
@@ -188,6 +193,36 @@ class UserController {
                 return res.status(403).json({ error: 'Acesso negado. Apenas Super Admins podem definir este papel.' });
             }
 
+            // --- LÓGICA DE ATUALIZAÇÃO DE PERMISSÕES GRANULARES (Arco Portus) ---
+            const permissionsToConnect: { id: string }[] = [];
+            if (arcoPortusPermissions) {
+                const permissionMap: { [key: string]: { action: string, subject: string } } = {
+                    canViewDocuments: { action: 'VIEW', subject: 'DOCUMENTS' },
+                    canEditDocuments: { action: 'EDIT', subject: 'DOCUMENTS' },
+                    canAddDocuments: { action: 'CREATE', subject: 'DOCUMENTS' },
+                    canDeleteDocuments: { action: 'DELETE', subject: 'DOCUMENTS' },
+                    canViewDiagnostico: { action: 'VIEW', subject: 'DIAGNOSTIC' },
+                    canViewNormas: { action: 'VIEW', subject: 'NORMS' },
+                    canViewRegisters: { action: 'VIEW', subject: 'REGISTERS' },
+                    canViewDashboards: { action: 'VIEW', subject: 'DASHBOARDS' },
+                    canViewLegislacao: { action: 'VIEW', subject: 'LEGISLATION' },
+                    canViewCFTV: { action: 'VIEW', subject: 'CFTV' },
+                };
+
+                // Itera sobre as permissões recebidas do frontend
+                for (const key in arcoPortusPermissions) {
+                    // Se a permissão estiver marcada como `true` e existir no nosso mapa
+                    if (arcoPortusPermissions[key] === true && permissionMap[key]) {
+                        // Busca o ID da permissão no banco de dados
+                        const perm = await prisma.permission.findUnique({ where: { action_subject: permissionMap[key] } });
+                        if (perm) {
+                            // Adiciona o ID à lista de permissões para conectar ao usuário
+                            permissionsToConnect.push({ id: perm.id });
+                        }
+                    }
+                }
+            }
+
             // Busca os CompanyProducts que conectam a empresa aos serviços selecionados
             const companyProducts = await prisma.companyProduct.findMany({
                 where: {
@@ -209,12 +244,20 @@ class UserController {
                         create: companyProducts.map(cp => ({ // Cria as novas associações
                             companyProduct: { connect: { id: cp.id } }
                         }))
+                    },
+                    // Lógica de atualização das permissões granulares
+                    permissions: {
+                        deleteMany: {}, // Apaga todas as permissões antigas do usuário
+                        create: permissionsToConnect.map(p => ({ // Cria as novas
+                            permission: { connect: { id: p.id } }
+                        }))
                     }
                 },
                 include: {
                     company: true,
                     userProducts: true,
-                }
+                    permissions: { include: { permission: true } } // Inclui as permissões para retornar ao frontend
+                },
             });
 
             // Cria log de auditoria
