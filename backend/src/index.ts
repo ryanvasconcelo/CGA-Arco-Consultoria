@@ -2,9 +2,13 @@
 import dotenv from 'dotenv';
 dotenv.config();
 
-import express from 'express';
+import express, { Router } from 'express'; // <-- Importe o Router
 import path from 'path';
+import cors from 'cors';
 import listEndpoints from 'express-list-endpoints';
+import { PrismaClient } from '@prisma/client';
+
+// Importação dos seus roteadores
 import { authMiddleware } from './middleware/auth';
 import sessionRouter from './routes/session.routes';
 import companyRouter from './routes/company.routes';
@@ -12,79 +16,56 @@ import productRouter from './routes/product.routes';
 import userRouter from './routes/user.routes';
 import passwordRouter from './routes/password.routes';
 import auditRouter from './routes/audit.routes';
-import cors from 'cors';
 
-// backend/src/server.ts (ou seu arquivo principal)
-import { PrismaClient } from '@prisma/client';
-// Importe suas rotas e outros middlewares
-
-// 1. Inicialize o Prisma Client fora da função
 const prisma = new PrismaClient();
+const app = express();
+const PORT = process.env.PORT || 3333;
 
-// Função assíncrona para iniciar o servidor
 async function startServer() {
   try {
-    // 2. Tenta conectar ao banco de dados.
-    // Se a string de conexão (DATABASE_URL) estiver errada ou o banco estiver offline,
-    // isso vai gerar um erro e pular para o bloco CATCH.
+    // 1. Conecta ao banco de dados
     await prisma.$connect();
     console.log('[LOG] Conexão com o banco de dados estabelecida com sucesso.');
 
-    // 3. Se a conexão for bem-sucedida, configure e inicie o servidor Express
+    // 2. Configura os middlewares UMA SÓ VEZ
     app.use(cors({
-      origin: 'https://cga.pktech.ai'
+      origin: process.env.CORS_ORIGIN || 'https://cga.pktech.ai',
+      credentials: true
     }));
     app.use(express.json());
-    // app.use('/api', routes); // Adicione suas rotas aqui
+    app.use('/uploads', express.static(path.join(__dirname, '../uploads')));
 
-    app.listen(3333, () => {
-      console.log('[LOG] Servidor iniciado e ouvindo na porta 3333.');
+    // 3. Cria um roteador principal para o prefixo /api
+    const apiRouter = Router();
+
+    // Rotas públicas
+    apiRouter.use('/sessions', sessionRouter);
+    apiRouter.use('/password', passwordRouter);
+
+    // Rotas protegidas
+    apiRouter.use('/companies', authMiddleware, companyRouter);
+    apiRouter.use('/products', authMiddleware, productRouter);
+    apiRouter.use('/users', authMiddleware, userRouter);
+    apiRouter.use('/audit', authMiddleware, auditRouter);
+
+    // 4. Usa o roteador principal com o prefixo /api <-- A MUDANÇA CHAVE
+    app.use('/api', apiRouter);
+
+    // 5. Inicia o servidor UMA SÓ VEZ
+    app.listen(PORT, () => {
+      console.log("--- MAPA DE ROTAS REGISTRADAS ---");
+      // O listEndpoints agora mostrará as rotas com o prefixo /api
+      console.table(listEndpoints(app));
+      console.log("---------------------------------");
+      console.log(`🚀 Servidor rodando na porta ${PORT}`);
     });
 
   } catch (error) {
-    // 4. Se a conexão falhar, exibe um erro detalhado e encerra o processo.
-    console.error('[ERRO] Não foi possível conectar ao banco de dados:');
-    console.error(error);
-
-    // Encerrar o processo com um código de erro é crucial para o Docker.
-    // Isso fará o contêiner parar, indicando claramente uma falha na inicialização.
-    process.exit(1);
-
-  } finally {
-    // 5. Garante que a conexão seja fechada se o processo for encerrado
+    console.error('[ERRO] Falha na inicialização do servidor:', error);
     await prisma.$disconnect();
+    process.exit(1);
   }
 }
 
-// 6. Chama a função para iniciar todo o processo
+// Chama a função para iniciar o servidor
 startServer();
-
-const app = express();
-
-// CORS configurado para o domínio em produção
-app.use(cors({
-  origin: process.env.CORS_ORIGIN || 'https://cga.pktech.ai',
-  credentials: true
-}));
-app.use(express.json());
-
-// ADICIONE ESTA LINHA para servir arquivos estáticos
-app.use('/uploads', express.static(path.join(__dirname, '../uploads')));
-
-// Rotas públicas (sem autenticação) - Traefik remove /api então essas rotas ficam sem prefixo
-app.use('/sessions', sessionRouter);
-app.use('/password', passwordRouter);
-
-// Rotas protegidas (com autenticação) - Traefik remove /api então essas rotas ficam sem prefixo
-app.use('/companies', authMiddleware, companyRouter);
-app.use('/products', authMiddleware, productRouter);
-app.use('/users', authMiddleware, userRouter);
-app.use('/audit', authMiddleware, auditRouter);
-
-const PORT = process.env.PORT || 3333;
-app.listen(PORT, () => {
-  console.log("--- MAPA DE ROTAS REGISTRADAS ---");
-  console.table(listEndpoints(app));
-  console.log("---------------------------------");
-  console.log(`🚀 Servidor rodando na porta ${PORT}`);
-});
