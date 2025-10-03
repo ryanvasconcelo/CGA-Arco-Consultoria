@@ -10,7 +10,7 @@ export default defineConfig({
     },
   },
   server: {
-    host: '0.0.0.0',
+    host: 'cga.pktech.ai',
     port: 5173,
   },
 })
