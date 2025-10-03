@@ -63,7 +63,12 @@ class AuditController {
             if (searchTerm && typeof searchTerm === 'string') {
                 conditions.push({
                     OR: [
-                        { author: { name: { contains: searchTerm, mode: 'insensitive' } } },
+                        // Busca no nome do autor, mas apenas se o autor existir
+                        {
+                            author: {
+                                name: { contains: searchTerm, mode: 'insensitive' }
+                            }
+                        },
                         { company: { name: { contains: searchTerm, mode: 'insensitive' } } },
                     ]
                 });
@@ -81,8 +86,8 @@ class AuditController {
             const [logs, total] = await Promise.all([
                 prisma.auditLog.findMany({
                     where: whereClause,
-                    include: {
-                        author: {
+                    include: { // <-- AQUI ESTÁ A CORREÇÃO
+                        author: { // Inclui os dados do autor relacionado
                             select: {
                                 id: true,
                                 name: true,
@@ -90,7 +95,7 @@ class AuditController {
                                 role: true,
                             },
                         },
-                        company: {
+                        company: { // Mantém a inclusão dos dados da empresa
                             select: {
                                 id: true,
                                 name: true,
@@ -135,8 +140,8 @@ class AuditController {
         try {
             const log = await prisma.auditLog.findUnique({
                 where: { id },
-                include: {
-                    author: {
+                include: { // <-- CORREÇÃO TAMBÉM NO MÉTODO 'show'
+                    author: { // Inclui os dados do autor
                         select: {
                             id: true,
                             name: true,
@@ -144,7 +149,7 @@ class AuditController {
                             role: true,
                         },
                     },
-                    company: {
+                    company: { // Mantém a inclusão da empresa
                         select: {
                             id: true,
                             name: true,

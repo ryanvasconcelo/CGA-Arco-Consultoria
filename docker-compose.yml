@@ -50,7 +50,7 @@ services:
       - ./frontend:/app
       - /app/node_modules # Isola o node_modules para evitar conflitos
     restart: unless-stopped
-    command: sh -c "npm install --legacy-peer-deps && npm run dev"
+    command: sh -c "npm install --legacy-peer-deps && npm run dev -- --host"
 
 # --- DECLARAÇÃO DE VOLUMES ---
 # ESTE BLOCO É CRUCIAL E DEVE TER INDENTAÇÃO ZERO.

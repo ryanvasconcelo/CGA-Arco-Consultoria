@@ -5,7 +5,7 @@ const prisma = new PrismaClient();
 
 interface AuditLogParams {
   action: AuditAction;
-  authorId?: string;
+  authorId: string; // Tornando o authorId obrigatório
   companyId: string;
   details?: any;
 }
@@ -18,17 +18,14 @@ export async function createAuditLog(params: AuditLogParams): Promise<void> {
   try {
     const data: any = {
       action: params.action,
+      authorId: params.authorId, // Agora sempre será incluído
       companyId: params.companyId,
-    };
-    
-    if (params.authorId) {
-      data.authorId = params.authorId;
     }
-    
+
     if (params.details) {
       data.details = params.details;
     }
-    
+
     await prisma.auditLog.create({ data });
   } catch (error) {
     // Log do erro, mas não interrompe o fluxo da aplicação

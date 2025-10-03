@@ -1,26 +1,22 @@
-FROM node:20-alpine
-
-# Instalar dependências do sistema
-RUN apk add --no-cache python3 make g++ libc6-compat
+# --- Estágio 1: Build ---
+# Instala as dependências e compila a aplicação Vite/React
+FROM node:20-alpine AS builder
 
 WORKDIR /app
 
-# Copiar package files
 COPY package*.json ./
 
-# Remover referências ao @swc/core do package.json durante o build
-RUN sed -i '/"@swc\/core"/d' package.json && \
-    sed -i '/overrides/,/}/d' package.json && \
-    sed -i '/resolutions/,/}/d' package.json && \
-    sed -i '/optionalDependencies/,/}/d' package.json
+RUN npm install --legacy-peer-deps
 
-# Instalar dependências (com todas as dependencies necessárias)
-RUN npm cache clean --force && \
-    npm install --legacy-peer-deps
-
-# Copiar código fonte
 COPY . .
 
-EXPOSE 5173
+RUN npm run build
 
-CMD ["npm", "run", "dev", "--", "--host", "0.0.0.0"]
+# --- Estágio 2: Produção ---
+# Usa uma imagem Nginx para servir os arquivos estáticos compilados
+FROM nginx:stable-alpine
+
+# Copia os arquivos da pasta 'dist' do estágio de build para a pasta padrão do Nginx
+COPY --from=builder /app/dist /usr/share/nginx/html
+
+EXPOSE 80

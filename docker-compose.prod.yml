@@ -1,0 +1,46 @@
+services:
+  cga_db:
+    image: postgres:latest
+    container_name: cga_postgres_db_prod
+    environment:
+      POSTGRES_USER: ${DB_USER}
+      POSTGRES_PASSWORD: ${DB_PASSWORD}
+      POSTGRES_DB: ${DB_NAME}
+    ports:
+      - "5432:5432"
+    volumes:
+      - cga_postgres_data_prod:/var/lib/postgresql/data
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${DB_USER} -d ${DB_NAME}"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile # Usa o Dockerfile de produção
+    container_name: cga_backend_api_prod
+    ports:
+      - "3333:3333"
+    depends_on:
+      cga_db:
+        condition: service_healthy
+    environment:
+      DATABASE_URL: "postgresql://${DB_USER}:${DB_PASSWORD}@cga_db:5432/${DB_NAME}?schema=public"
+      JWT_SECRET: ${JWT_SECRET}
+      NODE_ENV: production
+    restart: unless-stopped
+
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile # Usa o Dockerfile de produção
+    container_name: cga_frontend_prod
+    ports:
+      - "80:80" # Expõe na porta 80, padrão para web
+    restart: unless-stopped
+
+volumes:
+  cga_postgres_data_prod:
