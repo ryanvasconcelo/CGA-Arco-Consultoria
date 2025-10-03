@@ -18,13 +18,13 @@ export default defineConfig({
       'localhost',
       '.pktech.ai' // Permite todos os subdomínios
     ],
-    // Opcional: configurações de proxy se o backend estiver em outra porta
-    proxy: {
-      '/api': {
-        target: 'http://cga_backend_api:3333',
-        changeOrigin: true,
-        rewrite: (path) => path.replace(/^\/api/, '')
-      }
-    }
+    // Proxy não é necessário em produção pois o Traefik roteia as requisições
+    // Em desenvolvimento local, descomente e ajuste se necessário:
+    // proxy: {
+    //   '/api': {
+    //     target: 'http://backend:3333',
+    //     changeOrigin: true,
+    //   }
+    // }
   },
 })

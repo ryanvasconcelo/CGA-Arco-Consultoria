@@ -1,9 +1,12 @@
 // frontend/src/lib/api.ts
 import axios from 'axios';
 
+// Define a base URL a partir da variável de ambiente ou usa /api como fallback
+const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || '/api';
+
 // Instância do Axios para requisições autenticadas (com token JWT)
 const api = axios.create({
-  baseURL: import.meta.env.VITE_API_BASE_URL || 'https://cga.pktech.ai:3333/api',
+  baseURL: API_BASE_URL
 });
 
 // Interceptor para adicionar o token JWT a cada requisição
@@ -44,8 +47,9 @@ api.interceptors.response.use(
 );
 
 // Instância do Axios para requisições públicas/não autenticadas (ex: login, cadastro, esqueci a senha)
+// Usa a mesma base URL, pois o Traefik roteia ambas as rotas públicas e privadas
 const apiPublic = axios.create({
-  baseURL: import.meta.env.VITE_API_PUBLIC_URL || 'https://cga.pktech.ai:3333',
+  baseURL: API_BASE_URL,
 });
 
 // Exporta ambas as instâncias

@@ -16,24 +16,25 @@ import cors from 'cors';
 
 const app = express();
 
-app.use(cors());
+// CORS configurado para o domínio em produção
+app.use(cors({
+  origin: process.env.CORS_ORIGIN || 'https://cga.pktech.ai',
+  credentials: true
+}));
 app.use(express.json());
 
 // ADICIONE ESTA LINHA para servir arquivos estáticos
 app.use('/uploads', express.static(path.join(__dirname, '../uploads')));
 
+// Rotas públicas (sem autenticação) - Traefik remove /api então essas rotas ficam sem prefixo
 app.use('/sessions', sessionRouter);
 app.use('/password', passwordRouter);
 
-const apiRouter = express.Router();
-apiRouter.use(authMiddleware);
-
-apiRouter.use('/companies', companyRouter);
-apiRouter.use('/products', productRouter);
-apiRouter.use('/users', userRouter);
-apiRouter.use('/audit', auditRouter);
-
-app.use('/api', apiRouter);
+// Rotas protegidas (com autenticação) - Traefik remove /api então essas rotas ficam sem prefixo
+app.use('/companies', authMiddleware, companyRouter);
+app.use('/products', authMiddleware, productRouter);
+app.use('/users', authMiddleware, userRouter);
+app.use('/audit', authMiddleware, auditRouter);
 
 const PORT = process.env.PORT || 3333;
 app.listen(PORT, () => {
