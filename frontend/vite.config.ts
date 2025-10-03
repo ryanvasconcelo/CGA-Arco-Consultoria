@@ -20,10 +20,10 @@ export default defineConfig({
     ],
     // Em desenvolvimento local, o proxy é NECESSÁRIO.
     // Descomentei e corrigi o target para você.
-    proxy: { // <-- 1. BLOCO DESCOMENTADO
+    proxy: {
       '/api': {
-        // 2. TARGET CORRIGIDO PARA 'localhost'
-        target: 'http://localhost:3333',
+        // MUDE de 'localhost' para o nome do serviço do backend no Docker
+        target: 'http://backend:3333',
         changeOrigin: true,
       }
     }
