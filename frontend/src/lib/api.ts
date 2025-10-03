@@ -3,7 +3,7 @@ import axios from 'axios';
 
 // Instância do Axios para requisições autenticadas (com token JWT)
 const api = axios.create({
-  baseURL: import.meta.env.VITE_API_BASE_URL || 'http://localhost:3333/api',
+  baseURL: import.meta.env.VITE_API_BASE_URL || 'https://cga.pktech.ai:3333/api',
 });
 
 // Interceptor para adicionar o token JWT a cada requisição
@@ -45,7 +45,7 @@ api.interceptors.response.use(
 
 // Instância do Axios para requisições públicas/não autenticadas (ex: login, cadastro, esqueci a senha)
 const apiPublic = axios.create({
-  baseURL: import.meta.env.VITE_API_PUBLIC_URL || 'http://localhost:3333',
+  baseURL: import.meta.env.VITE_API_PUBLIC_URL || 'https://cga.pktech.ai:3333',
 });
 
 // Exporta ambas as instâncias

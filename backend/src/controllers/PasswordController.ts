@@ -37,7 +37,7 @@ class PasswordController {
         });
 
         // 4. Envia o email (por enquanto, vamos simular no console)
-        const resetURL = `http://localhost:5173/reset-password/${resetToken}`;
+        const resetURL = `https://cga.pktech.ai:5173/reset-password/${resetToken}`;
         console.log('----------------------------------------------------');
         console.log('EMAIL DE REDEFINIÇÃO DE SENHA (SIMULADO)');
         console.log(`Clique aqui para resetar sua senha: ${resetURL}`);

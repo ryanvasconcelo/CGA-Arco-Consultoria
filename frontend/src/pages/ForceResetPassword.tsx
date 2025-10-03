@@ -63,7 +63,7 @@ export default function ForceResetPassword() {
 
             // Cria uma instância axios temporária com o token
             const apiWithToken = axios.create({
-                baseURL: 'http://localhost:3333/api',
+                baseURL: 'http://cga.pktech.ai:3333/api',
                 headers: {
                     'Authorization': `Bearer ${tempToken}`,
                     'Content-Type': 'application/json'
