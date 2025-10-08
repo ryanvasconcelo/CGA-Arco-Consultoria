@@ -30,8 +30,7 @@ const services = [
   { id: 4, name: "ArcoView", logo: arcoviewLogo, description: "Monitoramento" },
   { id: 5, name: "GuardControl", logo: guardcontrolLogo, description: "Controle de acesso" },
   { id: 6, name: "UNICASP", logo: unicaspLogo, description: "Educação cooperativa" },
-  { id: 7, name: "CGA", logo: cgaLogo, description: "Central de gestão" },
-  { id: 8, name: "Arco Solutions", logo: arcoSolut, description: "Central de gestão" }
+  { id: 7, name: "Arco Solutions", logo: arcoSolut, description: "Central de gestão" }
 ];
 
 // Define grid layouts - cada layout é uma configuração diferente do quebra-cabeça
@@ -41,45 +40,31 @@ const gridLayouts = [
     { id: 1, row: 1, col: 1, rowSpan: 1, colSpan: 1 },
     { id: 2, row: 1, col: 2, rowSpan: 1, colSpan: 2 },
     { id: 3, row: 2, col: 1, rowSpan: 2, colSpan: 1 },
-    { id: 4, row: 2, col: 2, rowSpan: 1, colSpan: 1 },
+    { id: 4, row: 3, col: 3, rowSpan: 1, colSpan: 1 },
     { id: 5, row: 2, col: 3, rowSpan: 1, colSpan: 1 },
-    { id: 6, row: 3, col: 2, rowSpan: 1, colSpan: 1 },
-    { id: 7, row: 3, col: 3, rowSpan: 1, colSpan: 1 },
-    { id: 8, row: 3, col: 1, rowSpan: 1, colSpan: 1 },
+    { id: 6, row: 3, col: 1, rowSpan: 1, colSpan: 2 },
+    { id: 7, row: 2, col: 2, rowSpan: 1, colSpan: 1 }
   ],
   // Layout 2
   [
-    { id: 1, row: 1, col: 1, rowSpan: 2, colSpan: 1 },
-    { id: 2, row: 1, col: 2, rowSpan: 1, colSpan: 1 },
-    { id: 3, row: 1, col: 3, rowSpan: 1, colSpan: 1 },
-    { id: 4, row: 2, col: 2, rowSpan: 1, colSpan: 2 },
-    { id: 5, row: 3, col: 1, rowSpan: 1, colSpan: 1 },
-    { id: 6, row: 3, col: 2, rowSpan: 1, colSpan: 1 },
-    { id: 7, row: 3, col: 3, rowSpan: 1, colSpan: 1 },
-    { id: 8, row: 2, col: 1, rowSpan: 1, colSpan: 1 }
+    { id: 1, row: 2, col: 1, rowSpan: 1, colSpan: 1 },
+    { id: 2, row: 1, col: 1, rowSpan: 1, colSpan: 1 },
+    { id: 3, row: 1, col: 2, rowSpan: 1, colSpan: 2 },
+    { id: 4, row: 3, col: 1, rowSpan: 1, colSpan: 2 },
+    { id: 5, row: 3, col: 3, rowSpan: 1, colSpan: 1 },
+    { id: 6, row: 2, col: 3, rowSpan: 1, colSpan: 1 },
+    { id: 7, row: 2, col: 2, rowSpan: 1, colSpan: 1 }
   ],
   // Layout 3
   [
-    { id: 1, row: 1, col: 1, rowSpan: 1, colSpan: 1 },
-    { id: 2, row: 1, col: 2, rowSpan: 1, colSpan: 1 },
-    { id: 3, row: 1, col: 3, rowSpan: 2, colSpan: 1 },
-    { id: 4, row: 2, col: 1, rowSpan: 1, colSpan: 2 },
-    { id: 5, row: 3, col: 1, rowSpan: 1, colSpan: 1 },
-    { id: 6, row: 3, col: 2, rowSpan: 1, colSpan: 1 },
-    { id: 7, row: 2, col: 3, rowSpan: 2, colSpan: 1 },
-    { id: 8, row: 3, col: 3, rowSpan: 1, colSpan: 1 }
-  ],
-  // Layout 4
-  [
-    { id: 1, row: 1, col: 1, rowSpan: 1, colSpan: 2 },
-    { id: 2, row: 1, col: 3, rowSpan: 1, colSpan: 1 },
-    { id: 3, row: 2, col: 1, rowSpan: 1, colSpan: 1 },
-    { id: 4, row: 2, col: 2, rowSpan: 2, colSpan: 1 },
-    { id: 5, row: 2, col: 3, rowSpan: 1, colSpan: 1 },
-    { id: 6, row: 3, col: 1, rowSpan: 1, colSpan: 1 },
-    { id: 7, row: 3, col: 3, rowSpan: 1, colSpan: 1 },
-    { id: 8, row: 3, col: 2, rowSpan: 1, colSpan: 1 }
-  ],
+    { id: 1, row: 1, col: 2, rowSpan: 1, colSpan: 2 },
+    { id: 2, row: 2, col: 3, rowSpan: 1, colSpan: 1 },
+    { id: 3, row: 1, col: 1, rowSpan: 2, colSpan: 1 },
+    { id: 4, row: 2, col: 1, rowSpan: 1, colSpan: 1 },
+    { id: 5, row: 3, col: 1, rowSpan: 1, colSpan: 2 },
+    { id: 6, row: 3, col: 3, rowSpan: 1, colSpan: 1 },
+    { id: 7, row: 2, col: 2, rowSpan: 1, colSpan: 1 }
+  ]
 ];
 
 export default function Login() {
@@ -166,21 +151,11 @@ export default function Login() {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-background via-background to-primary/5 relative overflow-hidden">
-      {/* Background Pattern */}
-      <div className="absolute inset-0 bg-grid-pattern opacity-5 z-0"></div>
+    <div className="min-h-screen bg-gradient-to-br from-[#fefcea] via-[#f5f5fa] to-[#e0e0f0] relative overflow-hidden">
+      {/* Orb decorativo suave */}
+      <div className="absolute top-[-120px] left-[-120px] w-[420px] h-[420px] bg-gradient-to-br from-[#fff9c4] via-[#e1bee7] to-[#bbdefb] rounded-full blur-[120px] opacity-60 z-0"></div>
 
-      {/* Animated Gradient Orbs */}
-      <div className="absolute top-[-100px] left-[-100px] w-[400px] h-[400px] bg-gradient-to-br from-primary to-secondary rounded-full blur-3xl animate-pulse z-0"></div>
-      <div className="absolute top-[20%] right-[-150px] w-[300px] h-[300px] bg-gradient-to-tr from-secondary to-accent rounded-full blur-2xl animate-pulse z-0" style={{ animationDelay: '1s' }}></div>
-      <div className="absolute bottom-[10%] left-[30%] w-[350px] h-[350px] bg-gradient-to-bl from-muted to-primary rounded-full blur-2xl animate-pulse z-0" style={{ animationDelay: '2s' }}></div>
-      <div className="absolute bottom-[-120px] right-[10%] w-[400px] h-[400px] bg-gradient-to-br from-accent to-secondary rounded-full blur-3xl animate-pulse z-0" style={{ animationDelay: '3s' }}></div>
-      <div
-        className="absolute w-lg inset-0 bg-no-repeat bg-top-left bg-contain opacity-10 blur-sm z-0"
-        style={{
-          backgroundImage: "url('https://copilot.microsoft.com/th/id/BCO.f82a0515-c060-4a4f-ab80-8976deaf4d78.png')",
-        }}
-      ></div>
+      {/* Padrão animado sutil */}
 
 
       {/* Main Content */}
@@ -188,19 +163,25 @@ export default function Login() {
         <div className="w-full max-w-7xl mx-auto grid lg:grid-cols-2 gap-12 items-center">
 
           {/* Asymmetric Animated Grid - Puzzle Style */}
-          <div className="space-y-8 hidden lg:block">
-            <div className="space-y-4">
-              <h2 className="text-4xl font-bold">
-                <span className="text-foreground">ARCO</span>
-                <span className="text-muted-foreground"> | </span>
-                <span className="bg-gradient-to-r from-primary to-primary-hover bg-clip-text text-transparent">
-                  Uma solução para cada necessidade
-                </span>
-              </h2>
-              <p className="text-xl text-muted-foreground">
-                Soluções especializadas para cada área do seu negócio
-              </p>
+          <div className="space-y-6 hidden lg:block">
+            <div className="flex items-center gap-8 rounded-lg">
+              {/* Coluna da imagem */}
+              <div className="flex-shrink-0">
+                <img src={cgaLogo} alt="Logo CGA" className="w-64 h-auto" />
+              </div>
+
+              {/* Coluna do texto */}
+              <div className="space-y-2">
+                <h2 className="text-3xl font-extrabold text-gray-900 leading-tight">
+                  <span className="text-yellow-500">Uma solução para cada necessidade</span>
+                </h2>
+                <p className="text-lg text-gray-600">
+                  Soluções especializadas para cada área do seu negócio
+                </p>
+              </div>
             </div>
+
+
             <div ref={parent} className="grid grid-cols-3 gap-4 h-full">
               {gridLayouts[currentLayout].map((item) => {
                 const service = services.find(s => s.id === item.id);
@@ -284,18 +265,27 @@ export default function Login() {
 
           {/* Right Side - Login Form */}
           <div className="w-full max-w-md mx-auto lg:mx-auto">
-            <Card className="glass-card border-white/10 p-8 backdrop-blur-xl animate-fade-in">
+            {/* Formulário de login com fundo transparente */}
+            <Card className="p-8 backdrop-blur-xl border-white/10 animate-fade-in relative z-10">
+              <div
+                className="absolute -bottom-96 right-15 w-[1200px] h-[1200px] bg-no-repeat bg-contain opacity-10 blur-sm z-0"
+                style={{
+                  backgroundImage: "url('https://copilot.microsoft.com/th/id/BCO.f82a0515-c060-4a4f-ab80-8976deaf4d78.png')",
+                  backgroundPosition: "bottom right",
+                  backgroundSize: "cover",
+                }}
+              ></div>
               <div className="space-y-6">
                 <div className="text-center space-y-3">
-                  <h1 className="text-3xl font-bold bg-gradient-to-r from-primary to-primary-hover bg-clip-text text-transparent">Acesse sua conta</h1>
+                  <h1 className="text-3xl font-bold bg-gradient-to-r from-primary to-primary-hover bg-clip-text text-transparent">
+                    Acesse sua conta
+                  </h1>
                   <p className="text-muted-foreground">Entre com suas credenciais</p>
                 </div>
 
-                <form onSubmit={handleSubmit} className="space-y-4">
+                <form onSubmit={handleSubmit} className="space-y-6 relative z-10">
                   <div className="space-y-2">
-                    <Label htmlFor="email" className="text-sm font-medium">
-                      Email
-                    </Label>
+                    <Label htmlFor="email" className="text-sm font-medium">Email</Label>
                     <div className="relative">
                       <Mail className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
                       <Input
@@ -305,40 +295,32 @@ export default function Login() {
                         placeholder="seu@email.com"
                         value={formData.email}
                         onChange={handleInputChange}
-                        className="pl-10 glass-input h-12"
+                        className="pl-4 glass-input h-12"
                         required
                       />
                     </div>
                   </div>
 
                   <div className="space-y-2">
-                    <Label htmlFor="password" className="text-sm font-medium">
-                      Senha
-                    </Label>
+                    <Label htmlFor="password" className="text-sm font-medium">Senha</Label>
                     <div className="relative">
                       <Lock className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
                       <Input
                         id="password"
                         name="password"
                         type="password"
-                        placeholder="••••••••"
+                        placeholder="••••••"
                         value={formData.password}
                         onChange={handleInputChange}
-                        className="pl-10 glass-input h-12"
+                        className="pl-4 glass-input h-12"
                         required
                       />
                     </div>
                   </div>
 
-                  {error && (
-                    <div className="text-sm text-[hsl(var(--error))] text-center bg-[hsl(var(--error-light))] dark:bg-[hsl(var(--error))]/20 p-3 rounded-lg border border-[hsl(var(--error))]/20">
-                      {error}
-                    </div>
-                  )}
-
                   <Button
                     type="submit"
-                    className="w-full bg-primary text-primary-foreground hover:bg-primary/90 h-12 text-base font-semibold shadow-soft hover:shadow-medium transition-all"
+                    className="w-full gradient-primary h-12 text-base font-semibold hover-lift"
                   >
                     Acessar
                   </Button>
@@ -346,7 +328,7 @@ export default function Login() {
                   <div className="text-center">
                     <button
                       type="button"
-                      className="text-sm text-muted-foreground hover:text-primary transition-colors font-medium"
+                      className="text-sm text-muted-foreground hover:text-primary transition-colors"
                     >
                       Esqueci minha senha
                     </button>
@@ -357,7 +339,7 @@ export default function Login() {
                 <div className="pt-4 border-t border-border/50 flex justify-center">
                   <div className="w-48 h-48 rounded-full bg-background border-2 border-primary/20 flex items-center justify-center">
                     <div className="text-center">
-                      <img src={LGPD} alt="" />
+                      <img src={LGPD} alt="LGPD Certificado" />
                     </div>
                   </div>
                 </div>
@@ -366,12 +348,22 @@ export default function Login() {
           </div>
         </div>
       </div>
+
+      <div className="absolute bottom-40 left-80 w-fullspace-y-2">
+        <h2 className="text-3xl font-extrabold text-gray-900 leading-tight">
+          <span className="text-yellow-500">GESTÃO UNIFICADA DAS SOLUÇÕES</span>
+        </h2>
+        <p className="text-lg text-gray-600">
+          Tudo em um só lugar
+        </p>
+      </div>
+
       {/* Footer */}
       <footer className="py-8 text-center text-sm text-muted-foreground border-t border-border/50">
         <div className="container mx-auto">
           © 2023 Arco Consultoria em Segurança - Todos os direitos reservados.
         </div>
       </footer>
-    </div>
+    </div >
   );
 }

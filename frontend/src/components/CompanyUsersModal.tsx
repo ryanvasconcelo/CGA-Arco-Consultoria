@@ -54,9 +54,6 @@ export function CompanyUsersModal({ company, onClose }: CompanyUsersModalProps) 
             <User className="h-6 w-6 text-primary" />
             Usuários da Empresa: {company.name}
           </DialogTitle>
-          <Button variant="ghost" size="icon" onClick={onClose} className="absolute top-4 right-4">
-            <X className="h-4 w-4" />
-          </Button>
         </DialogHeader>
 
         <div className="flex-grow overflow-y-auto">
