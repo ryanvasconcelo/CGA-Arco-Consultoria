@@ -64,9 +64,6 @@ services:
         - "traefik.http.routers.cga-backend.entrypoints=websecure"
         - "traefik.http.routers.cga-backend.tls.certresolver=letsencryptresolver"
         - "traefik.http.routers.cga-backend.priority=100"
-        # Middleware para remover /api
-        - "traefik.http.routers.cga-backend.middlewares=stripprefix-api"
-        - "traefik.http.middlewares.stripprefix-api.stripprefix.prefixes=/api"
         # Service
         - "traefik.http.services.cga-backend.loadbalancer.server.port=3333"
         # Importante para Swarm
