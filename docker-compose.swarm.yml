@@ -32,9 +32,6 @@ services:
     environment:
       DB_NAME: ${DB_NAME}
       JWT_SECRET_FILE: /run/secrets/cga_jwt_secret
-      CORS_ORIGIN: https://cga.pktech.ai
-      NODE_ENV: production
-      PORT: 3333
     secrets:
       - cga_db_user
       - cga_db_password
@@ -47,14 +44,9 @@ services:
         npm install &&
         npx prisma migrate deploy &&
         npx prisma generate &&
+        npx prisma db seed &&
         npm run dev -- --host 0.0.0.0
       "
-    healthcheck:
-      test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:3333/sessions"]
-      interval: 30s
-      timeout: 10s
-      retries: 3
-      start_period: 40s
     networks:
       - ProjecontNet
     deploy:
@@ -72,7 +64,7 @@ services:
         - "traefik.http.routers.cga-backend.entrypoints=websecure"
         - "traefik.http.routers.cga-backend.tls.certresolver=letsencryptresolver"
         - "traefik.http.routers.cga-backend.priority=100"
-        # Middleware para remover /api do path antes de passar para o backend
+        # Middleware para remover /api
         - "traefik.http.routers.cga-backend.middlewares=stripprefix-api"
         - "traefik.http.middlewares.stripprefix-api.stripprefix.prefixes=/api"
         # Service
@@ -86,15 +78,7 @@ services:
     volumes:
       - /var/lib/docker/volumes/cga_arco_consultoria_data/_data/CGA-Arco-Consultoria/frontend:/app
       - /app/node_modules
-    environment:
-      VITE_API_BASE_URL: https://cga.pktech.ai/api
     command: sh -c "npm install --legacy-peer-deps && npm run dev -- --host 0.0.0.0"
-    healthcheck:
-      test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:5173"]
-      interval: 30s
-      timeout: 10s
-      retries: 3
-      start_period: 40s
     networks:
       - ProjecontNet
     deploy:
