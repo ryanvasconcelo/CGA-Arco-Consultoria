@@ -3,6 +3,7 @@ import { Request, Response } from 'express';
 import { PrismaClient } from '@prisma/client';
 import bcrypt from 'bcryptjs';
 import jwt from 'jsonwebtoken';
+import { createAuditLog } from '../helpers/auditLogger';
 
 const prisma = new PrismaClient();
 
@@ -79,6 +80,18 @@ class SessionController {
             console.log(`[LOG /sessions] ⏰ Expira em: 1 dia`);
 
             const { password: _, ...userWithoutPassword } = user;
+
+            // Cria log de auditoria para login bem-sucedido
+            await createAuditLog({
+                action: 'LOGIN_SUCCESS',
+                authorId: user.id,
+                companyId: user.companyId,
+                details: {
+                    message: `${user.name} realizou login`,
+                    userName: user.name,
+                    userEmail: user.email,
+                },
+            });
 
             return res.json({
                 user: userWithoutPassword,

@@ -2,6 +2,7 @@
 import { Request, Response } from 'express';
 import { Prisma, PrismaClient } from '@prisma/client';
 import { uploadLogo } from '../middleware/upload';
+import { createAuditLog } from '../helpers/auditLogger';
 
 const prisma = new PrismaClient();
 
@@ -98,6 +99,21 @@ class CompanyController {
                     },
                 }
             });
+
+            // Cria log de auditoria
+            const authenticatedUser = req.user;
+            if (authenticatedUser) {
+                await createAuditLog({
+                    action: 'CREATE_COMPANY',
+                    authorId: authenticatedUser.sub,
+                    companyId: company.id,
+                    details: {
+                        message: `Empresa ${name} foi criada`,
+                        targetCompany: name,
+                        companyCnpj: cnpj,
+                    },
+                });
+            }
 
             return res.status(201).json(company);
 
@@ -219,6 +235,19 @@ class CompanyController {
                     products: true,
                 }
             });
+
+            // Cria log de auditoria
+            await createAuditLog({
+                action: 'UPDATE_COMPANY',
+                authorId: authenticatedUser.sub,
+                companyId: id,
+                details: {
+                    message: `Empresa ${company.name} foi atualizada`,
+                    targetCompany: company.name,
+                    changes: dataToUpdate,
+                },
+            });
+
             return res.json(company);
 
         } catch (error) {
@@ -242,47 +271,123 @@ class CompanyController {
             return res.status(403).json({ error: 'Ação proibida. Você não pode remover sua própria empresa do sistema.' });
         }
 
-        // Graças ao 'onDelete: Cascade' no schema, o Prisma deletará a empresa e todos os dados dependentes.
-        await prisma.company.delete({ where: { id } });
-        return res.status(204).send();
+        try {
+            // Busca a empresa antes de deletar para ter os dados para o log
+            const companyToDelete = await prisma.company.findUnique({
+                where: { id },
+                select: { name: true, cnpj: true },
+            });
+
+            if (!companyToDelete) {
+                return res.status(404).json({ error: 'Empresa não encontrada.' });
+            }
+
+            // Graças ao 'onDelete: Cascade' no schema, o Prisma deletará a empresa e todos os dados dependentes.
+            await prisma.company.delete({ where: { id } });
+
+            // Cria log de auditoria
+            await createAuditLog({
+                action: 'DELETE_COMPANY',
+                authorId: authenticatedUser.sub,
+                companyId: id,
+                details: {
+                    message: `Empresa ${companyToDelete.name} foi removida`,
+                    targetCompany: companyToDelete.name,
+                    companyCnpj: companyToDelete.cnpj,
+                },
+            });
+
+            return res.status(204).send();
+        } catch (error) {
+            console.error(`Erro ao deletar empresa ${id}:`, error);
+            return res.status(500).json({ error: 'Falha ao remover empresa.' });
+        }
     }
 
     // Associa um serviço a uma empresa (cria um registro na tabela pivot)
     public async associateProduct(req: Request, res: Response): Promise<Response> {
         const { id: companyId } = req.params;
         const { productId } = req.body;
+        const authenticatedUser = req.user;
 
         if (!productId) {
             return res.status(400).json({ error: 'O productId é obrigatório.' });
         }
 
-        const association = await prisma.companyProduct.create({
-            data: {
-                companyId,
-                productId,
-            },
-        });
+        try {
+            const [association, company, product] = await Promise.all([
+                prisma.companyProduct.create({
+                    data: {
+                        companyId,
+                        productId,
+                    },
+                }),
+                prisma.company.findUnique({ where: { id: companyId }, select: { name: true } }),
+                prisma.product.findUnique({ where: { id: productId }, select: { name: true } }),
+            ]);
 
-        return res.status(201).json(association);
+            // Cria log de auditoria
+            if (authenticatedUser) {
+                await createAuditLog({
+                    action: 'ASSOCIATE_PRODUCT_TO_COMPANY',
+                    authorId: authenticatedUser.sub,
+                    companyId: companyId,
+                    details: {
+                        message: `Produto ${product?.name} foi associado à empresa ${company?.name}`,
+                        targetCompany: company?.name,
+                        productName: product?.name,
+                    },
+                });
+            }
+
+            return res.status(201).json(association);
+        } catch (error) {
+            console.error('Erro ao associar produto:', error);
+            return res.status(500).json({ error: 'Falha ao associar produto.' });
+        }
     }
 
     // Desassocia um serviço a uma empresa (cria um registro na tabela pivot)
     public async disassociateProduct(req: Request, res: Response): Promise<Response> {
         const { id: companyId, productId } = req.params;
+        const authenticatedUser = req.user;
 
-        const association = await prisma.companyProduct.findFirst({
-            where: { companyId, productId },
-        });
+        try {
+            const association = await prisma.companyProduct.findFirst({
+                where: { companyId, productId },
+                include: {
+                    company: { select: { name: true } },
+                    product: { select: { name: true } },
+                },
+            });
 
-        if (!association) {
-            return res.status(404).json({ error: 'Associação não encontrada.' });
+            if (!association) {
+                return res.status(404).json({ error: 'Associação não encontrada.' });
+            }
+
+            await prisma.companyProduct.delete({
+                where: { id: association.id },
+            });
+
+            // Cria log de auditoria
+            if (authenticatedUser) {
+                await createAuditLog({
+                    action: 'DISASSOCIATE_PRODUCT_FROM_COMPANY',
+                    authorId: authenticatedUser.sub,
+                    companyId: companyId,
+                    details: {
+                        message: `Produto ${association.product.name} foi desassociado da empresa ${association.company.name}`,
+                        targetCompany: association.company.name,
+                        productName: association.product.name,
+                    },
+                });
+            }
+
+            return res.status(204).send();
+        } catch (error) {
+            console.error('Erro ao desassociar produto:', error);
+            return res.status(500).json({ error: 'Falha ao desassociar produto.' });
         }
-
-        await prisma.companyProduct.delete({
-            where: { id: association.id },
-        });
-
-        return res.status(204).send();
     }
 }
 

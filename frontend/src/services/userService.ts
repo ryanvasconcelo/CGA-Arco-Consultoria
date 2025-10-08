@@ -82,3 +82,14 @@ export const deleteUser = async (id: string): Promise<void> => {
         throw error; // Lança o erro para o React Query capturar
     }
 };
+
+// --- FUNÇÃO DE BUSCA POR ID (NOVA) ---
+export const fetchUserById = async (id: string): Promise<User> => {
+    try {
+        const response = await api.get(`/users/${id}`);
+        return response.data;
+    } catch (error) {
+        console.error(`Erro ao buscar usuário ${id}:`, error);
+        throw new Error('Falha ao buscar usuário');
+    }
+};

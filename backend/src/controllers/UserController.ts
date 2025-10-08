@@ -320,6 +320,17 @@ class UserController {
                 },
             });
 
+            // Cria log de auditoria
+            await createAuditLog({
+                action: 'CHANGE_PASSWORD',
+                authorId: authenticatedUser.sub,
+                companyId: user.companyId,
+                details: {
+                    message: `${user.name} alterou sua senha`,
+                    userName: user.name,
+                },
+            });
+
             return res.status(200).json({ message: 'Senha alterada com sucesso.' });
 
         } catch (error) {
@@ -341,7 +352,7 @@ class UserController {
             // Busca o usuário antes de deletar para ter os dados para o log
             const userToDelete = await prisma.user.findUnique({
                 where: { id },
-                select: { name: true, email: true, companyId: true },
+                select: { name: true, email: true, companyId: true, role: true }, // <-- CORREÇÃO: Buscar o 'role' do usuário-alvo
             });
 
             if (!userToDelete) {
@@ -361,6 +372,7 @@ class UserController {
                         message: `Usuário ${userToDelete.name} foi removido`,
                         targetUser: userToDelete.name,
                         targetUserEmail: userToDelete.email,
+                        targetUserRole: userToDelete.role, // <-- CORREÇÃO: Adicionar o 'role' aos detalhes do log
                     },
                 });
             }

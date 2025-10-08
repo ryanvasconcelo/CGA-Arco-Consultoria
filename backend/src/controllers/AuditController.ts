@@ -31,8 +31,14 @@ class AuditController {
 
             // ADMIN só pode ver logs da sua empresa
             if (authenticatedUser.role === 'ADMIN') {
-                conditions.push({ companyId: authenticatedUser.companyId });
-                // ADMIN deve ver TODOS os logs da sua empresa
+                conditions.push(
+                    { companyId: authenticatedUser.companyId },
+                    {
+                        // ADMIN só pode ver ações de outros ADMINs ou USERs.
+                        // O 'OR' com author: null garante que ele veja ações do sistema (se houver).
+                        OR: [{ author: { role: { in: ['ADMIN', 'USER'] } } }, { author: null }]
+                    }
+                );
             } else if (authenticatedUser.role === 'SUPER_ADMIN' && req.query.companyId) {
                 // SUPER_ADMIN pode filtrar por empresa específica
                 conditions.push({ companyId: req.query.companyId as string });
@@ -185,12 +191,19 @@ class AuditController {
         }
 
         try {
-            const whereClause: any = {};
+            const whereClause: Prisma.AuditLogWhereInput = {};
 
-            // ADMIN só pode ver estatísticas da sua empresa
+            // ADMIN só pode ver estatísticas da sua empresa e apenas de ações de ADMIN/USER
             if (authenticatedUser.role === 'ADMIN') {
-                whereClause.companyId = authenticatedUser.companyId;
-                // REMOVIDO: Filtro que bloqueava logs de SUPER_ADMIN nas estatísticas
+                whereClause.AND = [
+                    { companyId: authenticatedUser.companyId },
+                    {
+                        OR: [
+                            { author: { role: { in: ['ADMIN', 'USER'] } } },
+                            { author: null }
+                        ]
+                    }
+                ];
             }
 
             // Total de eventos

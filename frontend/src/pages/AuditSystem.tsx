@@ -31,27 +31,55 @@ const actionTypes: Record<string, string> = {
   CREATE_COMPANY: "Criar Empresa",
   UPDATE_COMPANY: "Atualizar Empresa",
   DELETE_COMPANY: "Remover Empresa",
-  ASSOCIATE_PRODUCT_TO_COMPANY: "Associar Produto",
-  DISASSOCIATE_PRODUCT_FROM_COMPANY: "Desassociar Produto",
+  ASSOCIATE_PRODUCT_TO_COMPANY: "Associar Produto à Empresa",
+  DISASSOCIATE_PRODUCT_FROM_COMPANY: "Desassociar Produto da Empresa",
   ASSOCIATE_USER_TO_PRODUCT: "Associar Usuário a Produto",
   DISASSOCIATE_USER_FROM_PRODUCT: "Desassociar Usuário de Produto",
-  ASSOCIATE_USER_TO_PERMISSION: "Conceder Permissão",
-  DISASSOCIATE_USER_FROM_PERMISSION: "Revogar Permissão",
-  LOGIN_SUCCESS: "Login Bem-Sucedido",
-  CHANGE_PASSWORD: "Troca de Senha",
+  ASSOCIATE_USER_TO_PERMISSION: "Conceder Permissão ArcoPortus",
+  DISASSOCIATE_USER_FROM_PERMISSION: "Revogar Permissão ArcoPortus",
+  LOGIN_SUCCESS: "Login",
+  CHANGE_PASSWORD: "Alteração de Senha",
 };
 
-const getSeverityFromAction = (action: string): string => {
-  if (action.includes('DELETE') || action.includes('REMOVE')) return 'error';
-  if (action.includes('UPDATE')) return 'warning';
-  return 'info';
+type Severity = 'baixo' | 'medio' | 'alto';
+
+const getLogSeverity = (log: any): Severity => {
+  const { action, details } = log;
+
+  switch (action) {
+    // ALTA SEVERIDADE
+    case 'CREATE_COMPANY':
+    case 'DELETE_COMPANY':
+    case 'ASSOCIATE_PRODUCT_TO_COMPANY':
+    case 'DISASSOCIATE_PRODUCT_FROM_COMPANY':
+      return 'alto';
+
+    case 'DELETE_USER':
+      // Exclusão de usuário: médio se USER, alto se ADMIN/SUPER_ADMIN
+      return (details?.targetUserRole === 'ADMIN' || details?.targetUserRole === 'SUPER_ADMIN') ? 'alto' : 'medio';
+
+    // MÉDIA SEVERIDADE
+    case 'UPDATE_COMPANY':
+    case 'ASSOCIATE_USER_TO_PRODUCT':
+    case 'DISASSOCIATE_USER_FROM_PRODUCT':
+    case 'ASSOCIATE_USER_TO_PERMISSION':
+    case 'DISASSOCIATE_USER_FROM_PERMISSION':
+      return 'medio';
+
+    // BAIXA SEVERIDADE
+    case 'CREATE_USER':
+    case 'UPDATE_USER':
+    case 'LOGIN_SUCCESS':
+    case 'CHANGE_PASSWORD':
+    default:
+      return 'baixo';
+  }
 };
 
-const severityColors: Record<string, string> = {
-  info: "bg-blue-500/20 text-blue-600 border-blue-500/30",
-  warning: "bg-yellow-500/20 text-yellow-600 border-yellow-500/30",
-  error: "bg-red-500/20 text-red-600 border-red-500/30",
-  success: "bg-green-500/20 text-green-600 border-green-500/30"
+const severityConfig: Record<Severity, { label: string; color: string; icon: React.ReactNode }> = {
+  baixo: { label: "Baixo", color: "bg-blue-500/20 text-blue-600 border-blue-500/30", icon: <Eye className="h-3 w-3" /> },
+  medio: { label: "Médio", color: "bg-yellow-500/20 text-yellow-600 border-yellow-500/30", icon: <Activity className="h-3 w-3" /> },
+  alto: { label: "Alto", color: "bg-red-500/20 text-red-600 border-red-500/30", icon: <Shield className="h-3 w-3" /> },
 };
 
 export default function AuditSystem() {
@@ -84,14 +112,6 @@ export default function AuditSystem() {
 
   const formatTimestamp = (timestamp: string) => {
     return new Date(timestamp).toLocaleString('pt-BR');
-  };
-
-  const getSeverityIcon = (severity: string) => {
-    switch (severity) {
-      case 'error': return <Shield className="h-4 w-4" />;
-      case 'warning': return <Activity className="h-4 w-4" />;
-      default: return <Eye className="h-4 w-4" />;
-    }
   };
 
   const getActionDescription = (log: any): string => {
@@ -247,12 +267,11 @@ export default function AuditSystem() {
                       <TableHead>Descrição</TableHead>
                       <TableHead>Empresa</TableHead>
                       <TableHead>Severidade</TableHead>
-                      <TableHead className="text-right">Ações</TableHead>
                     </TableRow>
                   </TableHeader>
                   <TableBody>
                     {logs.map((log) => {
-                      const severity = getSeverityFromAction(log.action);
+                      const severity = getLogSeverity(log);
                       return (
                         <TableRow key={log.id} className="hover:bg-muted/30 transition-colors">
                           <TableCell>
@@ -277,20 +296,10 @@ export default function AuditSystem() {
                             <div className="text-sm">{log.company?.name || <span className="italic text-muted-foreground">N/A</span>}</div>
                           </TableCell>
                           <TableCell>
-                            <Badge className={severityColors[severity]}>
-                              {getSeverityIcon(severity)}
-                              <span className="ml-1 capitalize">{severity}</span>
+                            <Badge variant="outline" className={`${severityConfig[severity].color} flex items-center gap-1 w-fit`}>
+                              {severityConfig[severity].icon}
+                              <span className="capitalize">{severityConfig[severity].label}</span>
                             </Badge>
-                          </TableCell>
-                          <TableCell className="text-right">
-                            <Button
-                              variant="ghost"
-                              size="sm"
-                              onClick={() => setSelectedLog(log)}
-                              className="hover:bg-muted/50"
-                            >
-                              <Eye className="h-4 w-4" />
-                            </Button>
                           </TableCell>
                         </TableRow>
                       );
