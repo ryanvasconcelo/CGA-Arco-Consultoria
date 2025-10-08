@@ -45,6 +45,7 @@ services:
         DB_PASSWORD_VAL=$$(cat /run/secrets/cga_db_password) &&
         export DATABASE_URL=\"postgresql://$${DB_USER_VAL}:$${DB_PASSWORD_VAL}@cga_db:5432/${DB_NAME}?schema=public\" &&
         npm install &&
+        npx prisma deploy &&
         npx prisma generate &&
         npm run dev -- --host 0.0.0.0
       "

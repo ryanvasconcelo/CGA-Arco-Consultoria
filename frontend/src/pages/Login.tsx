@@ -9,6 +9,9 @@ import { Mail, Lock } from "lucide-react";
 import { motion } from 'framer-motion';
 import Tilt from 'react-parallax-tilt';
 import { useAutoAnimate } from '@formkit/auto-animate/react';
+import { ForgotPasswordModal } from "@/components/ForgotPasswordModal";
+import { toast } from "sonner";
+import axios from "axios";
 
 // Import service logos
 import acciaLogo from "@/assets/accia-logo.png";
@@ -76,6 +79,7 @@ export default function Login() {
   const [currentLayout, setCurrentLayout] = useState(0);
   const [transitioningCards, setTransitioningCards] = useState<Set<number>>(new Set());
   const [parent] = useAutoAnimate();
+  const [showForgotPasswordModal, setShowForgotPasswordModal] = useState(false);
 
   useEffect(() => {
     // Verifica se há uma mensagem de erro vinda do redirecionamento (ProtectedRoute)
@@ -140,13 +144,36 @@ export default function Login() {
       navigate('/');
     } catch (err: any) {
       if (err.response?.data?.requiresPasswordReset) {
-        // Armazena o token e senha temporários para usar na página de reset
+        // Armazena o token, senha temporária e email para usar na página de reset
         sessionStorage.setItem('@CGA:tempToken', err.response.data.token);
         sessionStorage.setItem('@CGA:tempPassword', formData.password);
+        sessionStorage.setItem('@CGA:userEmail', formData.email);
+        
+        toast.info('Redefinição de senha necessária', {
+          description: 'Você precisa criar uma nova senha para continuar.',
+        });
         navigate('/force-reset-password');
       } else {
-        setError('Email ou senha incorretos. Por favor, tente novamente.');
+        const errorMessage = 'Email ou senha incorretos. Por favor, tente novamente.';
+        setError(errorMessage);
+        toast.error('Erro ao fazer login', {
+          description: errorMessage,
+        });
       }
+    }
+  };
+
+  const handleForgotPassword = async (email: string) => {
+    try {
+      await axios.post('http://cga.pktech.ai:3333/api/password/forgot', { email });
+      toast.success('Email enviado!', {
+        description: 'Se o email existir no sistema, você receberá um link para redefinir sua senha.',
+      });
+      setShowForgotPasswordModal(false);
+    } catch (error) {
+      toast.error('Erro ao enviar email', {
+        description: 'Tente novamente mais tarde.',
+      });
     }
   };
 
@@ -313,6 +340,7 @@ export default function Login() {
                         value={formData.password}
                         onChange={handleInputChange}
                         className="pl-4 glass-input h-12"
+                        autoComplete="current-password"
                         required
                       />
                     </div>
@@ -328,6 +356,7 @@ export default function Login() {
                   <div className="text-center">
                     <button
                       type="button"
+                      onClick={() => setShowForgotPasswordModal(true)}
                       className="text-sm text-muted-foreground hover:text-primary transition-colors"
                     >
                       Esqueci minha senha
@@ -348,6 +377,14 @@ export default function Login() {
           </div>
         </div>
       </div>
+
+      {/* Forgot Password Modal */}
+      {showForgotPasswordModal && (
+        <ForgotPasswordModal
+          onClose={() => setShowForgotPasswordModal(false)}
+          onSubmit={handleForgotPassword}
+        />
+      )}
 
       <div className="absolute bottom-40 left-80 w-fullspace-y-2">
         <h2 className="text-3xl font-extrabold text-gray-900 leading-tight">

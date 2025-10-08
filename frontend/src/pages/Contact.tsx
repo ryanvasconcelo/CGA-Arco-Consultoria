@@ -212,17 +212,16 @@ const Contact = () => {
                     <Mail className="h-5 w-5 text-primary mt-1" />
                     <div>
                       <h3 className="font-semibold">Email</h3>
-                      <p className="text-muted-foreground">contato@consultoriaarco.com.br</p>
-                      <p className="text-muted-foreground">suporte@consultoriaarco.com.br</p>
+                      <p className="text-muted-foreground">administracao@consultoriaarco.com.br</p>
+                      <p className="text-muted-foreground">marco.trindade@consultoriaarco.com.br</p>
                     </div>
                   </div>
 
                   <div className="flex items-start gap-4">
                     <Phone className="h-5 w-5 text-primary mt-1" />
                     <div>
-                      <h3 className="font-semibold">Telefone</h3>
-                      <p className="text-muted-foreground">+55 (11) 9999-9999</p>
-                      <p className="text-muted-foreground">+55 (11) 8888-8888</p>
+                      <h3 className="font-semibold">WhatsApp</h3>
+                      <p className="text-muted-foreground">+55 (92) 99176-1245</p>
                     </div>
                   </div>
 

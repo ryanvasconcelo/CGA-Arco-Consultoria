@@ -12,7 +12,9 @@ export default function ForceResetPassword() {
     const navigate = useNavigate();
     const [tempToken, setTempToken] = useState('');
     const [tempPassword, setTempPassword] = useState('');
+    const [userEmail, setUserEmail] = useState('');
     const [formData, setFormData] = useState({
+        email: '',
         newPassword: '',
         confirmPassword: '',
     });
@@ -23,18 +25,21 @@ export default function ForceResetPassword() {
         // Recupera o token e senha temporários do sessionStorage
         const storedToken = sessionStorage.getItem('@CGA:tempToken');
         const storedPassword = sessionStorage.getItem('@CGA:tempPassword');
+        const storedEmail = sessionStorage.getItem('@CGA:userEmail');
         
         console.log('🔍 Debug - Token recuperado:', storedToken);
         console.log('🔍 Debug - Senha recuperada:', storedPassword ? '***' : 'null');
+        console.log('🔍 Debug - Email recuperado:', storedEmail);
         
-        if (!storedToken || !storedPassword) {
-            console.log('❌ Token ou senha não encontrados, redirecionando para login');
+        if (!storedToken || !storedPassword || !storedEmail) {
+            console.log('❌ Dados não encontrados, redirecionando para login');
             navigate('/login');
             return;
         }
         
         setTempToken(storedToken);
         setTempPassword(storedPassword);
+        setUserEmail(storedEmail);
     }, [navigate]);
 
     const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -45,13 +50,28 @@ export default function ForceResetPassword() {
         e.preventDefault();
         setError(null);
 
+        // Verifica se o email corresponde
+        if (formData.email.toLowerCase() !== userEmail.toLowerCase()) {
+            setError('O email não corresponde ao email cadastrado.');
+            toast.error('Email incorreto', {
+                description: 'Por favor, digite o email da sua conta.'
+            });
+            return;
+        }
+
         if (formData.newPassword !== formData.confirmPassword) {
             setError('As novas senhas não coincidem.');
+            toast.error('Senhas não coincidem', {
+                description: 'A nova senha e a confirmação devem ser iguais.'
+            });
             return;
         }
 
         if (formData.newPassword.length < 6) {
             setError('A nova senha deve ter pelo menos 6 caracteres.');
+            toast.error('Senha muito curta', {
+                description: 'A senha deve ter no mínimo 6 caracteres.'
+            });
             return;
         }
 
@@ -112,6 +132,21 @@ export default function ForceResetPassword() {
                 </CardHeader>
                 <CardContent>
                     <form onSubmit={handleSubmit} className="space-y-4">
+                        <div className="space-y-2">
+                            <Label htmlFor="email">Email de Verificação</Label>
+                            <Input
+                                id="email"
+                                name="email"
+                                type="email"
+                                placeholder="Confirme seu email"
+                                value={formData.email}
+                                onChange={handleChange}
+                                required
+                            />
+                            <p className="text-xs text-muted-foreground">
+                                Digite o email da sua conta para confirmar sua identidade
+                            </p>
+                        </div>
                         <div className="space-y-2">
                             <Label htmlFor="newPassword">Nova Senha</Label>
                             <Input id="newPassword" name="newPassword" type="password" value={formData.newPassword} onChange={handleChange} required />

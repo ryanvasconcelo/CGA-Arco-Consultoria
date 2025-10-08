@@ -48,7 +48,42 @@ class SessionController {
                 return res.status(401).json({ error: 'Credenciais inválidas.' });
             }
 
-            console.log(`[LOG /sessions] Senha correta. Gerando token JWT.`);
+            console.log(`[LOG /sessions] Senha correta.`);
+
+            // ✅ VERIFICAÇÃO: Se o usuário precisa resetar a senha
+            if (user.passwordResetRequired) {
+                console.log(`[LOG /sessions] ⚠️ Usuário ${user.id} precisa resetar senha no primeiro acesso`);
+
+                // Gera um token temporário para permitir a troca de senha
+                const secret = process.env.JWT_SECRET;
+                if (!secret) {
+                    console.error('[LOG /sessions] ERRO: JWT_SECRET não definido.');
+                    return res.status(500).json({ error: 'Erro interno no servidor.' });
+                }
+
+                const tempToken = jwt.sign(
+                    {
+                        role: user.role,
+                        company: user.company ? {
+                            id: user.company.id,
+                            name: user.company.name,
+                        } : null,
+                    },
+                    secret,
+                    {
+                        subject: user.id,
+                        expiresIn: '30m', // Token temporário expira em 30 minutos
+                    }
+                );
+
+                return res.status(403).json({
+                    requiresPasswordReset: true,
+                    token: tempToken,
+                    message: 'Você precisa redefinir sua senha antes de continuar.',
+                });
+            }
+
+            console.log(`[LOG /sessions] Gerando token JWT.`);
 
             const secret = process.env.JWT_SECRET;
             if (!secret) {

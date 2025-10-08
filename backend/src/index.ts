@@ -28,8 +28,24 @@ async function startServer() {
     console.log('[LOG] Conexão com o banco de dados estabelecida com sucesso.');
 
     // 2. Configura os middlewares UMA SÓ VEZ
+    const allowedOrigins = [
+      'https://cga.pktech.ai',
+      'http://localhost:5173',
+      'http://localhost:3000',
+      'http://127.0.0.1:5173',
+    ];
+    
     app.use(cors({
-      origin: process.env.CORS_ORIGIN || 'https://cga.pktech.ai',
+      origin: (origin, callback) => {
+        // Permite requisições sem origin (como mobile apps, Postman, etc)
+        if (!origin) return callback(null, true);
+        
+        if (allowedOrigins.includes(origin)) {
+          callback(null, true);
+        } else {
+          callback(new Error('Not allowed by CORS'));
+        }
+      },
       credentials: true
     }));
     app.use(express.json());

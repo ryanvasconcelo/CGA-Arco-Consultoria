@@ -6,6 +6,7 @@ import { BrowserRouter, Routes, Route } from "react-router-dom";
 import ProtectedRoute from "./components/ProtectedRoute";
 import RoleProtectedRoute from "./components/RoleProtectedRoute";
 import ForceResetPassword from "./pages/ForceResetPassword"
+import ResetPassword from "./pages/ResetPassword"
 import Index from "./pages/Index";
 import UserManagement from "./pages/UserManagement";
 import Contact from "./pages/Contact";
@@ -31,6 +32,7 @@ const App = () => (
           {/* Public Routes */}
           <Route path="/login" element={<Login />} />
           <Route path="/force-reset-password" element={<ForceResetPassword />} />
+          <Route path="/reset-password/:token" element={<ResetPassword />} />
 
           {/* Protected Routes - All authenticated users */}
           <Route element={<ProtectedRoute />}>

@@ -32,7 +32,7 @@ export function ForgotPasswordModal({ onClose, onSubmit }: ForgotPasswordModalPr
                 <CardContent>
                     <form onSubmit={handleSubmit} className="space-y-4">
                         <p className="text-sm text-muted-foreground">
-                            Digite seu e-mail abaixo. Se ele estiver cadastrado, enviaremos um link para você redefinir sua senha.
+                            Digite seu email. Se estiver cadastrado, enviaremos um link seguro para redefinir sua senha.
                         </p>
                         <div className="space-y-2">
                             <Label htmlFor="email">Email</Label>
@@ -45,6 +45,9 @@ export function ForgotPasswordModal({ onClose, onSubmit }: ForgotPasswordModalPr
                                 className="glass-input"
                                 required
                             />
+                            <p className="text-xs text-muted-foreground">
+                                Por segurança, limitamos a 3 tentativas por hora
+                            </p>
                         </div>
 
                         <div className="flex justify-end pt-4">

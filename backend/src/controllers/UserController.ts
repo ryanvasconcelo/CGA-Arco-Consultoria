@@ -3,6 +3,8 @@ import { Request, Response } from 'express';
 import { PrismaClient, Prisma } from '@prisma/client';
 import bcrypt from 'bcryptjs';
 import { createAuditLog } from '../helpers/auditLogger';
+import { generateTemporaryPassword } from '../utils/passwordGenerator';
+import emailService from '../services/emailService';
 
 const prisma = new PrismaClient();
 
@@ -79,7 +81,9 @@ class UserController {
         } = req.body;
 
         try {
-            const hashedPassword = await bcrypt.hash('123456', 10);
+            // Gera senha temporária segura
+            const temporaryPassword = generateTemporaryPassword();
+            const hashedPassword = await bcrypt.hash(temporaryPassword, 10);
 
             // --- VERIFICAÇÃO/CORREÇÃO DAS PERMISSÕES ---
             const permissionsToConnect: { id: string }[] = [];
@@ -141,6 +145,12 @@ class UserController {
 
             // Cria log de auditoria
             const authenticatedUser = req.user;
+            console.log('📝 [CREATE_USER] Criando log de auditoria...');
+            console.log('👤 [CREATE_USER] Authenticated User:', authenticatedUser);
+            console.log('🆔 [CREATE_USER] Author ID:', authenticatedUser?.sub);
+            console.log('🏢 [CREATE_USER] Company ID:', companyId);
+            console.log('👥 [CREATE_USER] Target User:', name);
+            
             if (authenticatedUser) {
                 await createAuditLog({
                     action: 'CREATE_USER',
@@ -153,6 +163,18 @@ class UserController {
                         targetUserRole: role,
                     },
                 });
+                console.log('✅ [CREATE_USER] Log de auditoria criado com sucesso');
+            } else {
+                console.log('⚠️ [CREATE_USER] authenticatedUser é null/undefined - log não será criado');
+            }
+
+            // Envia email com senha temporária
+            try {
+                await emailService.sendTemporaryPassword(email, name, temporaryPassword);
+                console.log(`✅ Email de senha temporária enviado para ${email}`);
+            } catch (emailError) {
+                console.error('❌ Erro ao enviar email, mas usuário foi criado:', emailError);
+                // Não falha a criação do usuário se o email falhar
             }
 
             const { password, ...userWithoutPassword } = user;

@@ -2,6 +2,7 @@ import { Request, Response } from 'express';
 import { PrismaClient } from '@prisma/client';
 import crypto from 'crypto';
 import bcrypt from 'bcryptjs';
+import emailService from '../services/emailService';
 
 const prisma = new PrismaClient();
 
@@ -36,13 +37,14 @@ class PasswordController {
             },
         });
 
-        // 4. Envia o email (por enquanto, vamos simular no console)
-        const resetURL = `https://cga.pktech.ai:5173/reset-password/${resetToken}`;
-        console.log('----------------------------------------------------');
-        console.log('EMAIL DE REDEFINIÇÃO DE SENHA (SIMULADO)');
-        console.log(`Clique aqui para resetar sua senha: ${resetURL}`);
-        console.log('----------------------------------------------------');
-        // TODO: Implementar o envio real com nodemailer
+        // 4. Envia o email com o link de reset
+        try {
+            await emailService.sendPasswordResetLink(user.email, user.name, resetToken);
+            console.log(`✅ Email de redefinição enviado para ${user.email}`);
+        } catch (emailError) {
+            console.error('❌ Erro ao enviar email de redefinição:', emailError);
+            // Por segurança, ainda retornamos sucesso mesmo se o email falhar
+        }
 
         return res.status(200).json({ message: 'Se um usuário com este email existir, um link de redefinição será enviado.' });
     }
@@ -50,7 +52,12 @@ class PasswordController {
     // Etapa 2: Usuário envia a nova senha com o token
     public async resetPassword(req: Request, res: Response): Promise<Response> {
         const { token } = req.params;
-        const { password } = req.body;
+        const { email, password } = req.body;
+
+        // Valida se o email foi fornecido
+        if (!email) {
+            return res.status(400).json({ error: 'Email é obrigatório para verificação.' });
+        }
 
         // 1. Criptografa o token recebido para comparar com o do banco
         const passwordResetToken = crypto
@@ -70,10 +77,15 @@ class PasswordController {
             return res.status(400).json({ error: 'Token inválido ou expirado.' });
         }
 
-        // 3. Criptografa a nova senha
+        // 3. Verifica se o email fornecido corresponde ao email do usuário
+        if (user.email.toLowerCase() !== email.toLowerCase()) {
+            return res.status(400).json({ error: 'Email não corresponde ao usuário.' });
+        }
+
+        // 4. Criptografa a nova senha
         const hashedPassword = await bcrypt.hash(password, 10);
 
-        // 4. Atualiza a senha e limpa os campos de reset
+        // 5. Atualiza a senha e limpa os campos de reset
         await prisma.user.update({
             where: { id: user.id },
             data: {

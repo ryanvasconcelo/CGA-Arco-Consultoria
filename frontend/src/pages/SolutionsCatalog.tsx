@@ -8,6 +8,7 @@ import arcoViewLogo from "@/assets/arcoview-controll.png";
 import guardControlLogo from "@/assets/guardcontroll-logo.png";
 import unicaspLogo from "@/assets/unicasp-logo.png";
 import arcoMokiLogo from "@/assets/checklist-facil-logo.jpg";
+import { url } from "node:inspector";
 
 const SolutionsCatalog = () => {
   const solutions = [
@@ -133,11 +134,10 @@ const SolutionsCatalog = () => {
                         ))}
                       </ul>
                     </div>
-
-                    <Button className="w-full btn-primary group-hover:scale-105 transition-transform">
+                    <a href="https://wa.me/5592991761245?text=Ol%C3%A1,%20gostaria%20de%20saber%20mais%20sobre%20os%20servi%C3%A7os%20da%20Arco%20Consultoria." className="w-full btn-primary group-hover:scale-105 transition-transform" target="_blank" rel="noopener noreferrer">
                       Saiba Mais
                       <ArrowRight className="h-4 w-4 ml-2" />
-                    </Button>
+                    </a>
                   </CardContent>
                 </Card>
               );
@@ -160,11 +160,15 @@ const SolutionsCatalog = () => {
               </p>
               <div className="flex flex-col sm:flex-row gap-4 justify-center">
                 <Button size="lg" className="btn-primary">
-                  Falar com Especialista
-                  <ArrowRight className="h-5 w-5 ml-2" />
+                  <a href="https://wa.me/5592991761245?text=Ol%C3%A1,%20gostaria%20de%20saber%20mais%20sobre%20os%20servi%C3%A7os%20da%20Arco%20Consultoria." className="flex items-center" target="_blank" rel="noopener noreferrer">
+                    Falar com Especialista
+                    <ArrowRight className="h-4 w-4 ml-2" />
+                  </a>
                 </Button>
                 <Button size="lg" variant="outline" className="border-primary text-primary hover:bg-primary hover:text-primary-foreground">
-                  Ver Demonstração
+                  <a href="https://wa.me/5592991761245?text=Ol%C3%A1,%20gostaria%20de%20saber%20mais%20sobre%20os%20servi%C3%A7os%20da%20Arco%20Consultoria." className="flex items-center" target="_blank" rel="noopener noreferrer">
+                    Ver Demonstração
+                  </a>
                 </Button>
               </div>
             </CardContent>
