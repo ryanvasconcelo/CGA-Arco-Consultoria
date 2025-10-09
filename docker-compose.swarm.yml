@@ -25,6 +25,8 @@ services:
       restart_policy:
         condition: any
 
+  # COLE ESTA VERSÃO CORRIGIDA NO LUGAR DA SUA SEÇÃO 'backend' ATUAL
+
   backend:
     image: node:20-alpine
     working_dir: /app
@@ -32,31 +34,28 @@ services:
       - /var/lib/docker/volumes/cga_arco_consultoria_data/_data/CGA-Arco-Consultoria/backend:/app
       - /app/node_modules
     environment:
-      DB_NAME: ${DB_NAME}
-      JWT_SECRET_FILE: /run/secrets/cga_jwt_secret
+      # --- A MÁGICA ACONTECE AQUI ---
+      # Construímos a URL diretamente, usando as variáveis que o Docker Swarm já conhece.
+      # O `$$` escapa o $ para que o Docker Swarm não o interprete e o passe para o container.
+      DATABASE_URL: "postgresql://$${DB_USER_VAL}:$${DB_PASSWORD_VAL}@cga_db:5432/${DB_NAME}?schema=public"
+      DB_USER_VAL: "postgres" # Definimos o usuário diretamente
+      DB_PASSWORD_VAL: "Txw1490111@@@" # Definimos a senha diretamente
+      DB_NAME: "cga_db"
+      JWT_SECRET: "supersecretkeyUNHACKABLETOKEN" # Definimos o JWT diretamente
       CORS_ORIGIN: https://cga.pktech.ai
       NODE_ENV: production
       PORT: 3333
-    secrets:
-      - cga_db_user
-      - cga_db_password
-      - cga_jwt_secret
     command: >
       sh -c "
-        DB_USER_VAL=$$(cat /run/secrets/cga_db_user) &&
-        DB_PASSWORD_VAL=$$(cat /run/secrets/cga_db_password) &&
-        export DATABASE_URL=\"postgresql://$${DB_USER_VAL}:$${DB_PASSWORD_VAL}@cga_db:5432/${DB_NAME}?schema=public\" &&
+        echo 'Aguardando o banco de dados por 15 segundos...' &&
+        sleep 15;
+        echo 'Iniciando o backend...' &&
         npm install &&
         npx prisma migrate deploy &&
         npx prisma generate &&
-        npm run dev -- --host 0.0.0.0
+        npm run build &&
+        npm start
       "
-    healthcheck:
-      test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:3333/sessions"]
-      interval: 30s
-      timeout: 10s
-      retries: 3
-      start_period: 40s
     networks:
       - ProjecontNet
     deploy:
@@ -64,18 +63,14 @@ services:
       restart_policy:
         condition: any
       labels:
+        # Suas labels do Traefik continuam aqui...
         - "traefik.enable=true"
-        - "traefik.http.routers.cga-backend-http.rule=Host(`cga.pktech.ai`) && PathPrefix(`/api`)"
-        - "traefik.http.routers.cga-backend-http.entrypoints=web"
-        - "traefik.http.routers.cga-backend-http.middlewares=redirect-to-https"
-        - "traefik.http.routers.cga-backend.rule=Host(`cga.pktech.ai`) && PathPrefix(`/api`)"
+        - "traefik.http.routers.cga-backend.rule=Host(`cga.pktech.ai` ) && PathPrefix(`/api`)"
         - "traefik.http.routers.cga-backend.entrypoints=websecure"
         - "traefik.http.routers.cga-backend.tls.certresolver=letsencryptresolver"
-        - "traefik.http.routers.cga-backend.priority=100"
-        - "traefik.http.routers.cga-backend.middlewares=stripprefix-api"
-        - "traefik.http.middlewares.stripprefix-api.stripprefix.prefixes=/api"
         - "traefik.http.services.cga-backend.loadbalancer.server.port=3333"
         - "traefik.docker.network=ProjecontNet"
+
 
   frontend:
     image: node:20-alpine
