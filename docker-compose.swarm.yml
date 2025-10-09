@@ -34,17 +34,15 @@ services:
       - /var/lib/docker/volumes/cga_arco_consultoria_data/_data/CGA-Arco-Consultoria/backend:/app
       - /app/node_modules
     environment:
-      # --- A MÁGICA ACONTECE AQUI ---
-      # Construímos a URL diretamente, usando as variáveis que o Docker Swarm já conhece.
-      # O `$$` escapa o $ para que o Docker Swarm não o interprete e o passe para o container.
       DATABASE_URL: "postgresql://$${DB_USER_VAL}:$${DB_PASSWORD_VAL}@cga_db:5432/${DB_NAME}?schema=public"
-      DB_USER_VAL: "postgres" # Definimos o usuário diretamente
-      DB_PASSWORD_VAL: "Txw1490111@@@" # Definimos a senha diretamente
+      DB_USER_VAL: "docker"
+      DB_PASSWORD_VAL: "docker"
       DB_NAME: "cga_db"
-      JWT_SECRET: "supersecretkeyUNHACKABLETOKEN" # Definimos o JWT diretamente
+      JWT_SECRET: "supersecretkeyUNHACKABLETOKEN"
       CORS_ORIGIN: https://cga.pktech.ai
       NODE_ENV: production
       PORT: 3333
+
     command: >
       sh -c "
         echo 'Aguardando o banco de dados por 15 segundos...' &&
