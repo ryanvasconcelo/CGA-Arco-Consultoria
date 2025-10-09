@@ -4,7 +4,7 @@
   "description": "",
   "main": "index.js",
   "scripts": {
-    "build": "tsc src/index.ts --project tsconfig.json",
+    "build": "tsc",
     "start": "node build/src/index.js",
     "dev": "ts-node-dev --respawn --transpile-only --files src/index.ts"
   },
