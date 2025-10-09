@@ -120,18 +120,18 @@ services:
         - "traefik.http.middlewares.redirect-to-https.redirectscheme.scheme=https"
         - "traefik.http.middlewares.redirect-to-https.redirectscheme.permanent=true"
 
-volumes:
-  cga_postgres_data:
-    name: cga_postgres_data
+    volumes:
+      cga_postgres_data:
+        name: cga_postgres_data
 
-secrets:
-  cga_db_user:
-    external: true
-  cga_db_password:
-    external: true
-  cga_jwt_secret:
-    external: true
+    secrets:
+      cga_db_user:
+        external: true
+      cga_db_password:
+        external: true
+      cga_jwt_secret:
+        external: true
 
-networks:
-  ProjecontNet:
-    external: true
+    networks:
+      ProjecontNet:
+        external: true
