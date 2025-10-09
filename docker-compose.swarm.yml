@@ -4,7 +4,7 @@ services:
   cga_db:
     image: postgres:latest
     environment:
-      POSTGRES_DB: ${DB_NAME}
+      POSTGRES_DB: "cga_db"
       POSTGRES_USER_FILE: /run/secrets/cga_db_user
       POSTGRES_PASSWORD_FILE: /run/secrets/cga_db_password
     volumes:
@@ -23,9 +23,7 @@ services:
     deploy:
       replicas: 1
       restart_policy:
-        condition: any
-
-  # COLE ESTA VERSÃO CORRIGIDA NO LUGAR DA SUA SEÇÃO 'backend' ATUAL
+        condition: on-failure
 
   backend:
     image: node:20-alpine
@@ -33,20 +31,24 @@ services:
     volumes:
       - /var/lib/docker/volumes/cga_arco_consultoria_data/_data/CGA-Arco-Consultoria/backend:/app
       - /app/node_modules
+    secrets:
+      - cga_db_user
+      - cga_db_password
+      - cga_jwt_secret
     environment:
-      DATABASE_URL: "postgresql://$${DB_USER_VAL}:$${DB_PASSWORD_VAL}@cga_db:5432/${DB_NAME}?schema=public"
-      DB_USER_VAL: "docker"
-      DB_PASSWORD_VAL: "docker"
+      DB_HOST: "cga_db"
       DB_NAME: "cga_db"
-      JWT_SECRET: "supersecretkeyUNHACKABLETOKEN"
-      CORS_ORIGIN: https://cga.pktech.ai
-      NODE_ENV: production
-      PORT: 3333
-
+      CORS_ORIGIN: "https://cga.pktech.ai"
+      NODE_ENV: "production"
+      PORT: "3333"
     command: >
       sh -c "
-        echo 'Aguardando o banco de dados por 15 segundos...' &&
-        sleep 15;
+        export DB_USER=$(cat /run/secrets/cga_db_user)
+        export DB_PASSWORD=$(cat /run/secrets/cga_db_password)
+        export JWT_SECRET=$(cat /run/secrets/cga_jwt_secret)
+        export DATABASE_URL=\"postgresql://$${DB_USER}:$${DB_PASSWORD}@$${DB_HOST}:5432/$${DB_NAME}?schema=public\"
+
+        echo 'Aguardando o banco de dados...' && sleep 15;
         echo 'Iniciando o backend...' &&
         npm install &&
         npx prisma migrate deploy &&
@@ -59,16 +61,14 @@ services:
     deploy:
       replicas: 1
       restart_policy:
-        condition: any
+        condition: on-failure
       labels:
-        # Suas labels do Traefik continuam aqui...
         - "traefik.enable=true"
-        - "traefik.http.routers.cga-backend.rule=Host(`cga.pktech.ai` ) && PathPrefix(`/api`)"
+        - "traefik.http.routers.cga-backend.rule=Host(`cga.pktech.ai`) && PathPrefix(`/api`)"
         - "traefik.http.routers.cga-backend.entrypoints=websecure"
         - "traefik.http.routers.cga-backend.tls.certresolver=letsencryptresolver"
         - "traefik.http.services.cga-backend.loadbalancer.server.port=3333"
         - "traefik.docker.network=ProjecontNet"
-
 
   frontend:
     image: node:20-alpine
@@ -77,20 +77,14 @@ services:
       - /var/lib/docker/volumes/cga_arco_consultoria_data/_data/CGA-Arco-Consultoria/frontend:/app
       - /app/node_modules
     environment:
-      VITE_API_BASE_URL: https://cga.pktech.ai/api
-    command: sh -c "npm install --legacy-peer-deps && npm run dev -- --host 0.0.0.0"
-    healthcheck:
-      test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:5173"]
-      interval: 30s
-      timeout: 10s
-      retries: 3
-      start_period: 40s
+      VITE_API_BASE_URL: "https://cga.pktech.ai/api"
+    command: sh -c "npm install --legacy-peer-deps && npm run build && npm preview -- --host 0.0.0.0 --port 5173"
     networks:
       - ProjecontNet
     deploy:
       replicas: 1
       restart_policy:
-        condition: any
+        condition: on-failure
       labels:
         - "traefik.enable=true"
         - "traefik.http.routers.cga-frontend-http.rule=Host(`cga.pktech.ai`)"
@@ -99,7 +93,6 @@ services:
         - "traefik.http.routers.cga-frontend.rule=Host(`cga.pktech.ai`)"
         - "traefik.http.routers.cga-frontend.entrypoints=websecure"
         - "traefik.http.routers.cga-frontend.tls.certresolver=letsencryptresolver"
-        - "traefik.http.routers.cga-frontend.priority=50"
         - "traefik.http.services.cga-frontend.loadbalancer.server.port=5173"
         - "traefik.docker.network=ProjecontNet"
         - "traefik.http.middlewares.redirect-to-https.redirectscheme.scheme=https"
