@@ -70,15 +70,26 @@ services:
         - "traefik.http.services.cga-backend.loadbalancer.server.port=3333"
         - "traefik.docker.network=ProjecontNet"
 
-  frontend:
+    frontend:
     image: node:20-alpine
     working_dir: /app
     volumes:
       - /var/lib/docker/volumes/cga_arco_consultoria_data/_data/CGA-Arco-Consultoria/frontend:/app
       - /app/node_modules
     environment:
-      VITE_API_BASE_URL: "https://cga.pktech.ai/api"
-    command: sh -c "npm install --legacy-peer-deps && npm run build && npm preview -- --host 0.0.0.0 --port 5173"
+      VITE_API_BASE_URL: https://cga.pktech.ai/api
+    # --- MUDANÇA AQUI ---
+    # 1. Instala as dependências
+    # 2. Roda o 'build' do Vite para criar os arquivos estáticos de produção
+    # 3. Usa 'npm run preview' para servir esses arquivos estáticos
+    command: sh -c "npm install --legacy-peer-deps && npm run build && npm run preview -- --host 0.0.0.0"
+    healthcheck:
+      # A porta do preview pode ser diferente, vamos ajustar se necessário, mas 5173 é um bom começo
+      test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:5173"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 60s # Damos mais tempo para o build
     networks:
       - ProjecontNet
     deploy:
