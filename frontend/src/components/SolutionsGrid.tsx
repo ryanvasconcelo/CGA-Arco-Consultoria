@@ -17,13 +17,13 @@ const solutions = [
     title: "Accia",
     titleImage: acciaLogo,
     description: "Sistema de Gestão e Análise de Risco de Segurança Corporativa",
-    link: "/accia" // Nova propriedade para navegação
+    link: "https://app.accia.com.br/site/login"
   },
   {
     title: "Guard Control",
     titleImage: guardControlLogo,
     description: "Gestão e Controle de Equipamento e Operações de Segurança e Facilities em tempo real",
-    link: "/guard-control"
+    link: "https://v2.findme.id/login"
   },
   {
     title: "Arco View",
@@ -35,13 +35,13 @@ const solutions = [
     title: "Arcomoki",
     titleImage: arcomokiLogo,
     description: "Sistema de Formulários Eletrônicos para Gestão de Processos e Controle de Qualidade",
-    link: "/arcomoki"
+    link: "https://moki.app/en/login"
   },
   {
     title: "Unicasp",
     titleImage: unicaspLogo,
     description: "Sua Plataforma de Educação Corporativa para Capacitação e Aprendizado de Equipes",
-    link: "/unicasp"
+    link: "https://unicasp.woli.com.br/pt-BR/Login/Index?returnUrl=%2F"
   },
   {
     title: "Arco Portus",
@@ -52,21 +52,17 @@ const solutions = [
 ];
 
 const SolutionsGrid = () => {
-  // Opção 1: Usando React Router
   const navigate = useNavigate();
 
-  const handleCardClick = (link) => {
-    navigate(link);
-  };
-
-  // Opção 2: Função para navegação simples (sem React Router)
-  const handleCardClickSimple = (link) => {
-    window.location.href = link;
-  };
-
-  // Opção 3: Abrir em nova aba
-  const handleCardClickNewTab = (link) => {
-    window.open(link, '_blank');
+  const handleSolutionClick = (link: string) => {
+    // Verifica se é um link externo
+    if (link.startsWith('http')) {
+      // Abre em uma nova aba (última opção)
+      window.open(link, '_blank');
+    } else {
+      // Navega internamente usando React Router (primeira opção)
+      navigate(link);
+    }
   };
 
   return (
@@ -114,7 +110,7 @@ const SolutionsGrid = () => {
                   key={solution.title}
                   className="corporate-card hover-lift group cursor-pointer animate-scale-in flex flex-col h-full"
                   style={{ animationDelay: `${index * 100}ms` }}
-                  onClick={() => handleCardClick(solution.link)} // Adiciona o evento de clique
+                  onClick={() => handleSolutionClick(solution.link)} // Adiciona o evento de clique
                 >
                   <CardHeader className="pb-3">
                     <div className="mb-3">
@@ -136,7 +132,7 @@ const SolutionsGrid = () => {
                         className="w-full btn-primary group-hover:shadow-glow"
                         onClick={(e) => {
                           e.stopPropagation(); // Previne a propagação do evento para o card
-                          handleCardClick(solution.link);
+                          handleSolutionClick(solution.link);
                         }}
                       >
                         <ExternalLink className="h-4 w-4 mr-2" />
@@ -150,7 +146,7 @@ const SolutionsGrid = () => {
 
             {/* Dashboards Section */}
             <div className="mt-8">
-              <Card className="corporate-card bg-gradient-to-r from-primary/10 to-primary/5 border-primary/20 hover-lift">
+              <Card className="corporate-card bg-gradient-to-r from-primary/10 to-primary/5 border-primary/20 hover-lift" onClick={() => navigate('/dashboard')}>
                 <CardContent className="p-8 cursor-pointer">
                   <div className="flex items-center justify-between">
                     <div>

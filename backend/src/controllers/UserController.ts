@@ -11,7 +11,7 @@ const prisma = new PrismaClient();
 class UserController {
     // backend/src/controllers/UserController.ts
     public async index(req: Request, res: Response): Promise<Response> {
-        const { page = '1', pageSize = '10', searchTerm } = req.query;
+        const { page = '1', pageSize = '10', searchTerm, companyId } = req.query;
         const pageNumber = parseInt(page as string, 10);
         const size = parseInt(pageSize as string, 10);
 
@@ -23,6 +23,11 @@ class UserController {
         // REGRA: ADMIN só pode ver usuários da sua própria empresa.
         if (authenticatedUser?.role === 'ADMIN') {
             whereClause.companyId = authenticatedUser.companyId;
+        }
+
+        // Adiciona filtro por companyId se fornecido na query (para SUPER_ADMIN ou para o modal)
+        if (companyId && typeof companyId === 'string') {
+            whereClause.companyId = companyId;
         }
 
         // Adiciona filtro de busca se o searchTerm for fornecido
@@ -150,7 +155,7 @@ class UserController {
             console.log('🆔 [CREATE_USER] Author ID:', authenticatedUser?.sub);
             console.log('🏢 [CREATE_USER] Company ID:', companyId);
             console.log('👥 [CREATE_USER] Target User:', name);
-            
+
             if (authenticatedUser) {
                 await createAuditLog({
                     action: 'CREATE_USER',

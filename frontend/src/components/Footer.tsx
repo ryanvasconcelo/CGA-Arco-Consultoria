@@ -12,13 +12,13 @@ const ArcoPortusFooter = () => {
 
           {/* Links */}
           <div className="flex flex-wrap items-center justify-center gap-6 text-sm">
-            <a href="/arco-portus/condicoes-uso" className="bg-primary text-primary-foreground px-4 py-2 rounded-md hover:bg-primary-hover transition-colors font-medium">
+            <a href="/condicoes-uso" className="bg-primary text-primary-foreground px-4 py-2 rounded-md hover:bg-primary-hover transition-colors font-medium">
               Condições de Uso
             </a>
-            <a href="/arco-portus/politica-cookies" className="bg-primary text-primary-foreground px-4 py-2 rounded-md hover:bg-primary-hover transition-colors font-medium">
+            <a href="/politica-cookies" className="bg-primary text-primary-foreground px-4 py-2 rounded-md hover:bg-primary-hover transition-colors font-medium">
               Política de Cookies
             </a>
-            <a href="/arco-portus/politica-privacidade" className="bg-primary text-primary-foreground px-4 py-2 rounded-md hover:bg-primary-hover transition-colors font-medium">
+            <a href="/politica-privacidade" className="bg-primary text-primary-foreground px-4 py-2 rounded-md hover:bg-primary-hover transition-colors font-medium">
               Política de Privacidade
             </a>
           </div>

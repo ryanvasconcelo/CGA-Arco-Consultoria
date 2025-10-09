@@ -19,6 +19,7 @@ import PoliticaPrivacidade from "./pages/PoliticaPrivacidade";
 import CompanyManagement from "./pages/CompanyManagement";
 import AuditSystem from "./pages/AuditSystem"
 import Login from "./pages/Login";
+import Dashboard from "./components/Dashboard";
 
 const queryClient = new QueryClient();
 
@@ -45,15 +46,16 @@ const App = () => (
               <Route path="/admin/users" element={<UserManagement />} />
               <Route path="/admin/companies" element={<CompanyManagement />} />
               <Route path="/admin/audit" element={<AuditSystem />} />
+              <Route path="/dashboard" element={<Dashboard />} />
               <Route path="/contato" element={<Contact />} />
               <Route path="/canal-denuncias" element={<WhistleblowerChannel />} />
               <Route path="/catalogo-solucoes" element={<SolutionsCatalog />} />
               <Route path="/condicoes-uso" element={<CondicoesUso />} />
               <Route path="/politica-cookies" element={<PoliticaCookies />} />
               <Route path="/politica-privacidade" element={<PoliticaPrivacidade />} />
-              <Route path="/arco-portus/condicoes-uso" element={<CondicoesUso />} />
-              <Route path="/arco-portus/politica-cookies" element={<PoliticaCookies />} />
-              <Route path="/arco-portus/politica-privacidade" element={<PoliticaPrivacidade />} />
+              <Route path="/condicoes-uso" element={<CondicoesUso />} />
+              <Route path="/politica-cookies" element={<PoliticaCookies />} />
+              <Route path="/politica-privacidade" element={<PoliticaPrivacidade />} />
             </Route>
           </Route>
 

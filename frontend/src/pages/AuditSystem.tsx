@@ -76,10 +76,10 @@ const getLogSeverity = (log: any): Severity => {
   }
 };
 
-const severityConfig: Record<Severity, { label: string; color: string; icon: React.ReactNode }> = {
-  baixo: { label: "Baixo", color: "bg-blue-500/20 text-blue-600 border-blue-500/30", icon: <Eye className="h-3 w-3" /> },
-  medio: { label: "Médio", color: "bg-yellow-500/20 text-yellow-600 border-yellow-500/30", icon: <Activity className="h-3 w-3" /> },
-  alto: { label: "Alto", color: "bg-red-500/20 text-red-600 border-red-500/30", icon: <Shield className="h-3 w-3" /> },
+const severityConfig: Record<Severity, { label: string; color: string; }> = {
+  baixo: { label: "Baixa", color: "bg-blue-500/20 text-blue-600 border-blue-500/30" },
+  medio: { label: "Média", color: "bg-yellow-500/20 text-yellow-600 border-yellow-500/30" },
+  alto: { label: "Alta", color: "bg-red-500/20 text-red-600 border-red-500/30" }
 };
 
 export default function AuditSystem() {
@@ -297,7 +297,6 @@ export default function AuditSystem() {
                           </TableCell>
                           <TableCell>
                             <Badge variant="outline" className={`${severityConfig[severity].color} flex items-center gap-1 w-fit`}>
-                              {severityConfig[severity].icon}
                               <span className="capitalize">{severityConfig[severity].label}</span>
                             </Badge>
                           </TableCell>

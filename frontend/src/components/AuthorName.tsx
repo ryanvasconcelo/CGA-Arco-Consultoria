@@ -9,10 +9,10 @@ interface AuthorNameProps {
 
 // Função síncrona para uma primeira tentativa de encontrar o nome
 const getInitialAuthorName = (log: AuditLog): string | null => {
-    if (log.author?.name) return log.author.name;
-    if (log.details?.authorName) return log.details.authorName;
-    if (log.details?.userName) return log.details.userName;
-    return null;
+  if (log.author?.name) return log.author.name;
+  if (log.details?.authorName) return log.details.authorName;
+  if (log.details?.userName) return log.details.userName;
+  return null;
 };
 
 export const AuthorName = ({ log }: AuthorNameProps) => {
