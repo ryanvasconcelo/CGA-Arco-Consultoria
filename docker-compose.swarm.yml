@@ -13,7 +13,7 @@ services:
       - cga_db_user
       - cga_db_password
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U postgres || exit 1"]
+      test: ["CMD-SHELL", "pg_isready -U docker || exit 1"]
       interval: 10s
       timeout: 5s
       retries: 5
