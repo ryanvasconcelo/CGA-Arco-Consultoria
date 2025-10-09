@@ -1,4 +1,5 @@
 version: '3.9'
+
 services:
   cga_db:
     image: postgres:latest
@@ -12,10 +13,11 @@ services:
       - cga_db_user
       - cga_db_password
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U $$(cat /run/secrets/cga_db_user) -d ${DB_NAME}"]
-      interval: 5s
+      test: ["CMD-SHELL", "pg_isready -U postgres || exit 1"]
+      interval: 10s
       timeout: 5s
       retries: 5
+      start_period: 30s
     networks:
       - ProjecontNet
     deploy:
@@ -63,21 +65,16 @@ services:
         condition: any
       labels:
         - "traefik.enable=true"
-        # Router HTTP (redireciona para HTTPS)
         - "traefik.http.routers.cga-backend-http.rule=Host(`cga.pktech.ai`) && PathPrefix(`/api`)"
         - "traefik.http.routers.cga-backend-http.entrypoints=web"
         - "traefik.http.routers.cga-backend-http.middlewares=redirect-to-https"
-        # Router HTTPS
         - "traefik.http.routers.cga-backend.rule=Host(`cga.pktech.ai`) && PathPrefix(`/api`)"
         - "traefik.http.routers.cga-backend.entrypoints=websecure"
         - "traefik.http.routers.cga-backend.tls.certresolver=letsencryptresolver"
         - "traefik.http.routers.cga-backend.priority=100"
-        # Middleware para remover /api do path antes de passar para o backend
         - "traefik.http.routers.cga-backend.middlewares=stripprefix-api"
         - "traefik.http.middlewares.stripprefix-api.stripprefix.prefixes=/api"
-        # Service
         - "traefik.http.services.cga-backend.loadbalancer.server.port=3333"
-        # Importante para Swarm
         - "traefik.docker.network=ProjecontNet"
 
   frontend:
@@ -103,35 +100,30 @@ services:
         condition: any
       labels:
         - "traefik.enable=true"
-        # Router HTTP (redireciona para HTTPS)
         - "traefik.http.routers.cga-frontend-http.rule=Host(`cga.pktech.ai`)"
         - "traefik.http.routers.cga-frontend-http.entrypoints=web"
         - "traefik.http.routers.cga-frontend-http.middlewares=redirect-to-https"
-        # Router HTTPS
         - "traefik.http.routers.cga-frontend.rule=Host(`cga.pktech.ai`)"
         - "traefik.http.routers.cga-frontend.entrypoints=websecure"
         - "traefik.http.routers.cga-frontend.tls.certresolver=letsencryptresolver"
         - "traefik.http.routers.cga-frontend.priority=50"
-        # Service
         - "traefik.http.services.cga-frontend.loadbalancer.server.port=5173"
-        # Importante para Swarm
         - "traefik.docker.network=ProjecontNet"
-        # Middleware de redirecionamento HTTPS
         - "traefik.http.middlewares.redirect-to-https.redirectscheme.scheme=https"
         - "traefik.http.middlewares.redirect-to-https.redirectscheme.permanent=true"
 
-    volumes:
-      cga_postgres_data:
-        name: cga_postgres_data
+volumes:
+  cga_postgres_data:
+    name: cga_postgres_data
 
-    secrets:
-      cga_db_user:
-        external: true
-      cga_db_password:
-        external: true
-      cga_jwt_secret:
-        external: true
+secrets:
+  cga_db_user:
+    external: true
+  cga_db_password:
+    external: true
+  cga_jwt_secret:
+    external: true
 
-    networks:
-      ProjecontNet:
-        external: true
+networks:
+  ProjecontNet:
+    external: true
