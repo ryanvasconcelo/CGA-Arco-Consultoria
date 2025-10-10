@@ -69,7 +69,7 @@ async function main() {
     console.log('Tabelas de dependência (UserPermission, UserProduct, CompanyProduct) e principais (User, Company) limpas.');
 
     // --- ETAPA 3: Criar Empresas e Usuários de Teste ---
-    const defaultPassword = await bcrypt.hash('123456', 10);
+    const defaultPassword = await bcrypt.hash('123456', 6);
     console.log('Senha padrão criada.');
 
     // Criar empresa do sistema para o Super Admin (nosso contorno)
