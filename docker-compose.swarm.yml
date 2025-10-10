@@ -41,6 +41,14 @@ services:
       CORS_ORIGIN: "https://cga.pktech.ai"
       NODE_ENV: "production"
       PORT: "3333"
+      SMTP_HOST: "smtp.gmail.com"
+      SMTP_PORT: "587"
+      SMTP_SECURE: "false"
+      SMTP_USER: "pktech.testes@gmail.com"
+      SMTP_PASS: "xxna ywzv yaxw cfko"  # <-- Para maior segurança no futuro, considere usar um Docker Secret aqui
+      SMTP_FROM_NAME: "CGA - Sistema de Gestão"
+      SMTP_FROM_EMAIL: "noreply@cga.pktech.ai"
+
     command: >
       sh -c "
         export DB_USER=$$(cat /run/secrets/cga_db_user)
