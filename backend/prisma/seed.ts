@@ -100,22 +100,22 @@ async function main() {
             password: defaultPassword,
             role: 'SUPER_ADMIN',
             passwordResetRequired: true, // Super admin não precisa resetar a senha
-            companyId: systemCompany.id,
+            companyId: patosCompany.id,
         },
     });
 
-    const adminUser = await prisma.user.create({
+    const superAdmin3 = await prisma.user.create({
         data: {
             name: 'Marco Trindade',
             email: 'marco.trindade@consultoriaarco.com.br',
             password: defaultPassword,
             role: 'SUPER_ADMIN',
             passwordResetRequired: true, // Super admin não precisa resetar a senha
-            companyId: systemCompany.id,
+            companyId: patosCompany.id,
         },
     });
 
-    const normalUser = await prisma.user.create({
+    const superAdmin2 = await prisma.user.create({
         data: {
             name: 'Ryan Richard Vasconcelo',
             email: 'ryancdz9@gmail.com',
