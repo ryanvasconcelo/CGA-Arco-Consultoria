@@ -75,7 +75,7 @@ async function main() {
     // Criar empresa do sistema para o Super Admin (nosso contorno)
     const systemCompany = await prisma.company.create({
         data: {
-            name: 'Arco System Internal',
+            name: "PK Tech",
             cnpj: '00000000000000',
             primaryColor: '#cccccc',
             secondaryColor: '#333333',
@@ -84,8 +84,8 @@ async function main() {
 
     const patosCompany = await prisma.company.create({
         data: {
-            name: "Pato's Company LTDA",
-            cnpj: '11222333000144',
+            name: 'Arco Consultoria',
+            cnpj: '30643481000114',
             primaryColor: '#f59e0b',
             secondaryColor: '#1f2937',
         },
@@ -95,33 +95,34 @@ async function main() {
     // Criar usuários
     const superAdmin = await prisma.user.create({
         data: {
-            name: 'Super Admin',
-            email: 'superadmin@arco.com',
+            name: 'Edil Magno',
+            email: 'administracao@consultoriaarco.com.br',
             password: defaultPassword,
             role: 'SUPER_ADMIN',
-            passwordResetRequired: false, // Super admin não precisa resetar a senha
+            passwordResetRequired: true, // Super admin não precisa resetar a senha
             companyId: systemCompany.id,
         },
     });
 
     const adminUser = await prisma.user.create({
         data: {
-            name: 'Admin Pato',
-            email: 'admin@pato.com',
+            name: 'Marco Trindade',
+            email: 'marco.trindade@consultoriaarco.com.br',
             password: defaultPassword,
-            role: 'ADMIN',
-            passwordResetRequired: false, // Admin de teste não precisa resetar a senha
-            companyId: patosCompany.id,
+            role: 'SUPER_ADMIN',
+            passwordResetRequired: true, // Super admin não precisa resetar a senha
+            companyId: systemCompany.id,
         },
     });
 
     const normalUser = await prisma.user.create({
         data: {
-            name: 'User Pato',
-            email: 'user@pato.com',
+            name: 'Ryan Richard Vasconcelo',
+            email: 'ryancdz9@gmail.com',
             password: defaultPassword,
-            role: 'USER',
-            companyId: patosCompany.id,
+            role: 'SUPER_ADMIN',
+            passwordResetRequired: true, // Super admin não precisa resetar a senha
+            companyId: systemCompany.id,
         },
     });
     console.log('Usuários de teste criados.');

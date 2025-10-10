@@ -309,6 +309,7 @@ export default function Login() {
                   backgroundImage: "url('https://copilot.microsoft.com/th/id/BCO.f82a0515-c060-4a4f-ab80-8976deaf4d78.png')",
                   backgroundPosition: "bottom right",
                   backgroundSize: "cover",
+                  
                 }}
               ></div>
               <div className="space-y-6">
