@@ -77,7 +77,7 @@ services:
       - /var/lib/docker/volumes/cga_arco_consultoria_data/_data/CGA-Arco-Consultoria/frontend:/app
       - /app/node_modules
     environment:
-      VITE_API_BASE_URL: "https://cga.pktech.ai/api"
+      VITE_API_BASE_URL: "/api"
     command: sh -c "npm install --legacy-peer-deps && npm run build && npm run preview -- --host 0.0.0.0 --port 5173"
     networks:
       - ProjecontNet
