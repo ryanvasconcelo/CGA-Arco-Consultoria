@@ -287,6 +287,15 @@ export default function Login() {
 
                 );
               })}
+
+            </div>
+            <div className="w-fullspace-y-2 rounded-lg">
+              <h2 className="text-3xl font-extrabold text-gray-900">
+                <span className="text-yellow-500">GESTÃO UNIFICADA DAS SOLUÇÕES</span>
+              </h2>
+              <p className="text-lg text-gray-600">
+                Tudo em um só lugar
+              </p>
             </div>
           </div>
 
@@ -385,15 +394,6 @@ export default function Login() {
           onSubmit={handleForgotPassword}
         />
       )}
-
-      <div className="absolute bottom-40 left-80 w-fullspace-y-2">
-        <h2 className="text-3xl font-extrabold text-gray-900 leading-tight">
-          <span className="text-yellow-500">GESTÃO UNIFICADA DAS SOLUÇÕES</span>
-        </h2>
-        <p className="text-lg text-gray-600">
-          Tudo em um só lugar
-        </p>
-      </div>
 
       {/* Footer */}
       <footer className="py-8 text-center text-sm text-muted-foreground border-t border-border/50">
