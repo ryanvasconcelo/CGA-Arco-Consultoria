@@ -7,7 +7,7 @@ import arcoPortusLogo from "@/assets/arco-portus-logo.png";
 import arcoViewLogo from "@/assets/arcoview-controll.png";
 import guardControlLogo from "@/assets/guardcontroll-logo.png";
 import unicaspLogo from "@/assets/unicasp-logo.png";
-import arcoMokiLogo from "@/assets/checklist-facil-logo.jpg";
+import arcoMokiLogo from "@/assets/checklist-facil-logo.png";
 import { url } from "node:inspector";
 
 const SolutionsCatalog = () => {
@@ -17,7 +17,7 @@ const SolutionsCatalog = () => {
       name: "Accia",
       logo: acciaLogo,
       icon: Shield,
-      description: "Plataforma de gestão de segurança corporativa com análise de riscos e compliance regulatório.",
+      description: "Sistema de Gerenciamento de Riscos e Ocorrências em Segurança Patrimonial",
       features: ["Gestão de Riscos", "Compliance", "Auditoria", "Relatórios"],
       color: "from-blue-500 to-cyan-500"
     },
@@ -26,7 +26,7 @@ const SolutionsCatalog = () => {
       name: "Arco Portus",
       logo: arcoPortusLogo,
       icon: Waves,
-      description: "Sistema integrado de controle portuário e gestão logística marítima.",
+      description: "Plataforma para Gerenciamento de Operações de Segurança Portuária",
       features: ["Controle Portuário", "Logística", "Rastreamento", "Integração"],
       color: "from-amber-500 to-orange-500"
     },
@@ -35,7 +35,7 @@ const SolutionsCatalog = () => {
       name: "Arco View",
       logo: arcoViewLogo,
       icon: Eye,
-      description: "Solução de monitoramento e análise visual para segurança corporativa.",
+      description: "Solução de Monitoramento por Drones Automatizados para Segurança",
       features: ["Monitoramento", "Análise Visual", "Alertas", "Dashboard"],
       color: "from-green-500 to-emerald-500"
     },
@@ -44,7 +44,7 @@ const SolutionsCatalog = () => {
       name: "Guard Control",
       logo: guardControlLogo,
       icon: Shield,
-      description: "Tecnologia avançada para controle de acesso e segurança patrimonial.",
+      description: "Sistema de Gestão Inteligente das Operações de Segurança e Serviços",
       features: ["Controle de Acesso", "Segurança", "Monitoramento", "Relatórios"],
       color: "from-blue-600 to-indigo-600"
     },
@@ -53,7 +53,7 @@ const SolutionsCatalog = () => {
       name: "Unicasp",
       logo: unicaspLogo,
       icon: GraduationCap,
-      description: "Universidade corporativa com cursos e treinamentos especializados em segurança.",
+      description: "Plataforma de Educação Corporativo para Capacitação e Aperfeiçoamento",
       features: ["Cursos Online", "Certificações", "Treinamentos", "Avaliações"],
       color: "from-purple-500 to-violet-500"
     },
@@ -62,7 +62,7 @@ const SolutionsCatalog = () => {
       name: "Arco Moki",
       logo: arcoMokiLogo,
       icon: CheckSquare,
-      description: "Checklist digital inteligente para padronização de processos e conformidade.",
+      description: "Solução para Criação de Formulários Eletrônicos Personalizados",
       features: ["Checklists Digitais", "Processos", "Conformidade", "Automação"],
       color: "from-green-600 to-teal-600"
     }
@@ -72,23 +72,15 @@ const SolutionsCatalog = () => {
     <div className="min-h-screen bg-gradient-to-br from-primary/5 via-background to-secondary/5">
       <Header />
       {/* Hero Section */}
-      <section className="py-20 px-4">
+      <section className="pt-20 px-4">
         <div className="container mx-auto text-center">
-          <h1 className="text-5xl lg:text-6xl font-bold text-foreground mb-6">
-            Catálogo de <span className="text-secondary">Soluções</span>
+          <h1 className="text-5xl font-bold bg-gradient-to-r from-primary to-primary-hover bg-clip-text text-transparent pb-8">
+            Catálogo de Soluções
           </h1>
           <p className="text-xl text-muted-foreground max-w-3xl mx-auto mb-8">
             Conheça nossas soluções integradas de gestão corporativa, desenvolvidas para atender
             cada necessidade específica do seu negócio com tecnologia de ponta.
           </p>
-          <div className="flex items-center justify-center space-x-4">
-            <div className="text-3xl font-bold">
-              <span className="text-foreground">CGA</span>
-            </div>
-            <div className="text-sm text-muted-foreground">
-              CENTRAL DE GESTÃO ARCO
-            </div>
-          </div>
         </div>
       </section>
 

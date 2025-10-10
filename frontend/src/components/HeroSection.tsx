@@ -1,73 +1,72 @@
 import { Button } from "@/components/ui/button";
 import { useState, useEffect } from "react";
+import { Link } from "react-router-dom";
 import heroImage from "@/assets/hero-image.jpg";
 import solutionsImage from "@/assets/solutions-image.jpg";
 
 const slides = [
   {
-    title: "Tecnologia e Inovação",
+    title: "Gestão centralizada",
     subtitle: "para informações integradas",
     description: "Soluções corporativas avançadas para gestão unificada, monitoramento em tempo real.",
     image: heroImage,
     primaryButton: "Explorar Soluções",
-    secondaryButton: "Saiba Mais"
+    primaryLink: "/catalogo-solucoes",
+    secondaryLink: "https://wa.me/5592991761245?text=Ol%C3%A1,%20gostaria%20de%20saber%20mais%20sobre%20os%20servi%C3%A7os%20da%20Arco%20Consultoria.",
+    secondaryButton: "Demonstração"
   },
   {
-    title: "Soluções Inteligentes",
+    title: "Soluções inteligentes",
     subtitle: "para seu negócio crescer",
     description: "Plataformas integradas que transformam dados em insights valiosos para decisões estratégicas.",
     image: solutionsImage,
-    primaryButton: "Ver Catálogo",
-    secondaryButton: "Conhecer Mais"
-  },
-  {
-    title: "Gestão Centralizada",
-    subtitle: "controle total em suas mãos",
-    description: "Sistema completo de gestão com interface intuitiva e recursos avançados de monitoramento.",
-    image: heroImage,
-    primaryButton: "Começar Agora",
+    primaryButton: "Explorar Soluções",
+    primaryLink: "/catalogo-solucoes",
+    secondaryLink: "https://wa.me/5592991761245?text=Ol%C3%A1,%20gostaria%20de%20saber%20mais%20sobre%20os%20servi%C3%A7os%20da%20Arco%20Consultoria.",
     secondaryButton: "Demonstração"
   }
 ];
 
 const HeroSection = () => {
   const [currentSlide, setCurrentSlide] = useState(0);
+  const [fade, setFade] = useState(true);
 
   useEffect(() => {
     const timer = setInterval(() => {
-      setCurrentSlide((prev) => (prev + 1) % slides.length);
-    }, 5000); // Auto scroll every 5 seconds
+      setFade(false);
+      setTimeout(() => {
+        setCurrentSlide((prev) => (prev + 1) % slides.length);
+        setFade(true);
+      }, 200); // tempo da transição
+    }, 10000);
 
     return () => clearInterval(timer);
   }, []);
 
-  const nextSlide = () => {
-    setCurrentSlide((prev) => (prev + 1) % slides.length);
-  };
-
-  const prevSlide = () => {
-    setCurrentSlide((prev) => (prev - 1 + slides.length) % slides.length);
-  };
-
   const goToSlide = (index: number) => {
-    setCurrentSlide(index);
+    setFade(false);
+    setTimeout(() => {
+      setCurrentSlide(index);
+      setFade(true);
+    }, 200);
   };
+
   return (
     <section className="relative bg-gradient-to-r from-secondary via-secondary-light to-secondary overflow-hidden">
       <div className="absolute inset-0 bg-gradient-to-r from-black/20 to-transparent"></div>
 
       {/* Background Image */}
-      <div className="absolute inset-0">
+      <div className={`absolute animate-fade-in inset-0 transition-all duration-700 ${fade ? 'opacity-100 scale-100' : 'opacity-0 scale-95'}`}>
         <img
           src={slides[currentSlide].image}
           alt={slides[currentSlide].title}
-          className="w-full h-full object-cover opacity-30 transition-opacity duration-1000"
+          className="w-full h-full object-cover opacity-30"
         />
       </div>
 
       <div className="relative container mx-auto px-4 py-20 lg:py-32">
         <div className="grid lg:grid-cols-2 gap-12 items-center">
-          <div className="text-center lg:text-left animate-fade-in">
+          <div className={`text-center lg:text-left transition-opacity duration-700 ${fade ? 'opacity-100' : 'opacity-0'}`}>
             <h1 className="text-4xl lg:text-6xl font-bold text-white mb-6 leading-tight">
               <span className="text-primary">{slides[currentSlide].title.split(' ')[0]}</span>{" "}
               {slides[currentSlide].title.split(' ').slice(1).join(' ')}
@@ -82,12 +81,21 @@ const HeroSection = () => {
             </p>
 
             <div className="flex flex-col sm:flex-row gap-4 justify-center lg:justify-start">
-              <Button className="btn-primary text-lg px-8 py-4 hover-glow">
-                {slides[currentSlide].primaryButton}
-              </Button>
-              <Button variant="outline" className="text-secondary border-white hover:border-slate-400 hover:bg-gray-200 text-lg px-8 py-4">
-                {slides[currentSlide].secondaryButton}
-              </Button>
+              <Link to={slides[currentSlide].primaryLink}>
+                <Button className="btn-primary text-lg px-8 py-4 hover-glow">
+                  {slides[currentSlide].primaryButton}
+                </Button>
+              </Link>
+
+              <a
+                href={slides[currentSlide].secondaryLink}
+                target="_blank"
+                rel="noopener noreferrer"
+              >
+                <Button variant="outline" className="text-secondary border-white hover:border-slate-400 hover:bg-gray-200 text-lg px-8 py-4">
+                  {slides[currentSlide].secondaryButton}
+                </Button>
+              </a>
             </div>
           </div>
 
@@ -102,8 +110,7 @@ const HeroSection = () => {
             <button
               key={index}
               onClick={() => goToSlide(index)}
-              className={`w-3 h-3 rounded-full transition-all duration-300 ${index === currentSlide ? 'bg-primary scale-125' : 'bg-white/50 hover:bg-white/75'
-                }`}
+              className={`w-3 h-3 rounded-full transition-all duration-300 ${index === currentSlide ? 'bg-primary scale-125' : 'bg-white/50 hover:bg-white/75'}`}
             />
           ))}
         </div>

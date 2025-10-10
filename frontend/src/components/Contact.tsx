@@ -81,7 +81,7 @@ const Contact = () => {
         <div className="max-w-6xl mx-auto">
           {/* Header Section */}
           <div className="text-center mb-12">
-            <h1 className="text-4xl font-bold bg-gradient-to-r from-primary to-primary-hover bg-clip-text text-transparent mb-4">
+            <h1 className="text-4xl font-bold bg-gradient-to-r from-primary to-primary-glow bg-clip-text text-transparent mb-4">
               Entre em Contato
             </h1>
             <p className="text-xl text-muted-foreground max-w-2xl mx-auto">
@@ -212,23 +212,24 @@ const Contact = () => {
                     <Mail className="h-5 w-5 text-primary mt-1" />
                     <div>
                       <h3 className="font-semibold">Email</h3>
-                      <p className="text-muted-foreground">administracao@consultoriaarco.com.br</p>
-                      <p className="text-muted-foreground">marco.trindade@consultoriaarco.com.br</p>
+                      <p className="text-muted-foreground">contato@consultoriaarco.com.br</p>
+                      <p className="text-muted-foreground">suporte@consultoriaarco.com.br</p>
                     </div>
                   </div>
 
                   <div className="flex items-start gap-4">
                     <Phone className="h-5 w-5 text-primary mt-1" />
                     <div>
-                      <h3 className="font-semibold">WhatsApp</h3>
-                      <p className="text-muted-foreground">+55 (92) 99176-1245</p>
+                      <h3 className="font-semibold">Telefone</h3>
+                      <p className="text-muted-foreground">+55 (11) 9999-9999</p>
+                      <p className="text-muted-foreground">+55 (11) 8888-8888</p>
                     </div>
                   </div>
 
                   <div className="flex items-start gap-4">
                     <Globe className="h-5 w-5 text-primary mt-1" />
                     <div>
-                      <h3 className="font-semibold">Site</h3>
+                      <h3 className="font-semibold">Website</h3>
                       <p className="text-muted-foreground">www.consultoriaarco.com.br</p>
                     </div>
                   </div>

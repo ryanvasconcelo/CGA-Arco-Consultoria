@@ -16,7 +16,7 @@ import axios from "axios";
 // Import service logos
 import acciaLogo from "@/assets/accia-logo.png";
 import arcoPortusLogo from "@/assets/arco-portus-logo.png";
-import arcomokiLogo from "@/assets/checklist-facil-logo.jpg";
+import arcomokiLogo from "@/assets/checklist-facil-logo.png";
 import arcoviewLogo from "@/assets/arcoview-controll.png";
 import guardcontrolLogo from "@/assets/guardcontroll-logo.png";
 import unicaspLogo from "@/assets/unicasp-logo.png";
@@ -148,7 +148,7 @@ export default function Login() {
         sessionStorage.setItem('@CGA:tempToken', err.response.data.token);
         sessionStorage.setItem('@CGA:tempPassword', formData.password);
         sessionStorage.setItem('@CGA:userEmail', formData.email);
-        
+
         toast.info('Redefinição de senha necessária', {
           description: 'Você precisa criar uma nova senha para continuar.',
         });

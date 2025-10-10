@@ -8,45 +8,46 @@ import { useNavigate } from 'react-router-dom'
 import acciaLogo from "@/assets/accia-logo.png";
 import guardControlLogo from "@/assets/guardcontroll-logo.png";
 import arcoViewLogo from "@/assets/arcoview-controll.png";
-import arcomokiLogo from "@/assets/checklist-facil-logo.jpg";
+import arcomokiLogo from "@/assets/checklist-facil-logo.png";
 import unicaspLogo from "@/assets/unicasp-logo.png";
 import arcoPorusLogo from "@/assets/arco-portus-logo.png";
+import cgaLogo from "@/assets/cga-logo.png";
 
 const solutions = [
   {
     title: "Accia",
     titleImage: acciaLogo,
-    description: "Sistema de Gestão e Análise de Risco de Segurança Corporativa",
+    description: "Sistema de Gerenciamento de Riscos e Ocorrências em Segurança Patrimonial",
     link: "https://app.accia.com.br/site/login"
   },
   {
     title: "Guard Control",
     titleImage: guardControlLogo,
-    description: "Gestão e Controle de Equipamento e Operações de Segurança e Facilities em tempo real",
+    description: "Sistema de Gestão Inteligente das Operações de Segurança e Serviços",
     link: "https://v2.findme.id/login"
   },
   {
     title: "Arco View",
     titleImage: arcoViewLogo,
-    description: "Solução de Monitoramento por Drones Automatizados",
+    description: "Solução de Monitoramento por Drones Automatizados para Segurança",
     link: "/arco-view"
   },
   {
     title: "Arcomoki",
     titleImage: arcomokiLogo,
-    description: "Sistema de Formulários Eletrônicos para Gestão de Processos e Controle de Qualidade",
-    link: "https://moki.app/en/login"
+    description: "Solução para Criação de Formulários Eletrônicos Personalizados",
+    link: "https://moki.app/pt/login"
   },
   {
     title: "Unicasp",
     titleImage: unicaspLogo,
-    description: "Sua Plataforma de Educação Corporativa para Capacitação e Aprendizado de Equipes",
+    description: "Plataforma de Educação Corporativo para Capacitação e Aperfeiçoamento",
     link: "https://unicasp.woli.com.br/pt-BR/Login/Index?returnUrl=%2F"
   },
   {
     title: "Arco Portus",
     titleImage: arcoPorusLogo,
-    description: "Plataforma de Gerenciamento de Operações de Segurança Portuária e Controle de Acesso",
+    description: "Plataforma para Gerenciamento de Operações de Segurança Portuária",
     link: "/arco-portus"
   }
 ];
@@ -72,19 +73,11 @@ const SolutionsGrid = () => {
           {/* Left Side - Company Info */}
           <div className="lg:col-span-4 space-y-8">
             <div className="text-center lg:text-left">
-              <div className="text-3xl font-bold mb-2">
-                <span className="text-secondary">CGA</span>
-              </div>
-              <div className="text-sm text-muted-foreground mb-4">
-                CENTRAL DE GESTÃO ARCO
-              </div>
-              <h2 className="heading-secondary mb-4">
+              <h2 className="heading-secondary mb-0">
                 Gestão Unificada das Soluções
               </h2>
-              <p className="text-corporate text-lg mb-6">
-                <span className="text-primary font-semibold">de Segurança, Serviços</span>
-                <br />
-                <span className="text-primary font-semibold">e Treinamentos</span>
+              <p className="text-corporate text-lg mb-0">
+                <span className="text-primary font-semibold">Segurança, Serviços e Treinamentos</span>
               </p>
             </div>
 
@@ -96,8 +89,8 @@ const SolutionsGrid = () => {
               />
               <div className="absolute inset-0 bg-gradient-to-t from-secondary/80 via-transparent to-transparent"></div>
               <div className="absolute bottom-6 left-6 text-white">
-                <h3 className="text-2xl font-bold mb-2">Tudo em um</h3>
-                <p className="text-primary text-3xl font-bold">Só Lugar!</p>
+                <h3 className="text-4xl font-bold mb-2">Tudo em um</h3>
+                <p className="text-primary text-5xl font-bold">Só lugar!</p>
               </div>
             </div>
           </div>
@@ -123,7 +116,7 @@ const SolutionsGrid = () => {
                   </CardHeader>
 
                   <CardContent className="space-y-4 flex-1 flex flex-col">
-                    <CardDescription className="text-corporate text-sm leading-relaxed group-hover:text-primary transition-colors flex-1">
+                    <CardDescription className="text-corporate text-center text-sm leading-relaxed group-hover:text-primary transition-colors flex-1">
                       {solution.description}
                     </CardDescription>
 

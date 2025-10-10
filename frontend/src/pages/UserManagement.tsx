@@ -43,10 +43,11 @@ const roleLabels: { [key: string]: string } = {
 };
 
 const roleColors: { [key: string]: string } = {
-  SUPER_ADMIN: "bg-gradient-to-r from-[hsl(var(--role-super-admin-from))] to-[hsl(var(--role-super-admin-to))]",
-  ADMIN: "bg-gradient-to-r from-[hsl(var(--role-admin-from))] to-[hsl(var(--role-admin-to))]",
-  USER: "bg-gradient-to-r from-[hsl(var(--role-user-from))] to-[hsl(var(--role-user-to))]"
+  SUPER_ADMIN: "bg-[hsl(var(--role-super-admin))]",
+  ADMIN: "bg-[hsl(var(--role-admin))]",
+  USER: "bg-[hsl(var(--role-user))]"
 };
+
 
 export default function UserManagement() {
   const { user: currentUser, loading: authLoading } = useAuth();
@@ -243,10 +244,6 @@ export default function UserManagement() {
                               <DropdownMenuItem onClick={() => handleEditUser(user)} className="cursor-pointer">
                                 <Edit2 className="mr-2 h-4 w-4" />
                                 Editar
-                              </DropdownMenuItem>
-                              <DropdownMenuItem onClick={() => handleToggleStatus(user.id)} className="cursor-pointer">
-                                <Eye className="mr-2 h-4 w-4" />
-                                {user.status === "active" ? "Desativar" : "Ativar"}
                               </DropdownMenuItem>
                               <DropdownMenuItem
                                 className="text-destructive cursor-pointer"

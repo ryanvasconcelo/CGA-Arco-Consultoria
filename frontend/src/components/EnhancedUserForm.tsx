@@ -42,10 +42,10 @@ export function EnhancedUserForm({
     name: "", email: "", role: "USER", status: "ACTIVE", companyId: "",
     services: [] as string[],
     arcoPortusPermissions: {
-      canViewDocuments: true, canEditDocuments: false, canDeleteDocuments: false,
-      canAddDocuments: false, canViewCFTV: true, canViewLegislacao: true,
-      canViewNormas: true, canViewDiagnostico: false, canViewRegisters: true,
-      canViewDashboards: true,
+      canViewDocuments: false, canEditDocuments: false, canDeleteDocuments: false,
+      canAddDocuments: false, canViewCFTV: false, canViewLegislacao: false,
+      canViewNormas: false, canViewDiagnostico: false, canViewRegisters: false,
+      canViewDashboards: false,
     }
   });
 
@@ -126,10 +126,10 @@ export function EnhancedUserForm({
   // CORREÇÃO: Usa companiesForForm em vez de availableCompanies
   const servicesToShow = useMemo(() => {
     if (!formData.companyId) return [];
-    
+
     // Encontra a empresa selecionada na lista correta de empresas
     const selectedCompany = companiesForForm.find(c => c.id === formData.companyId);
-    
+
     // Se a empresa não for encontrada ou não tiver produtos, retorna um array vazio.
     if (!selectedCompany || !Array.isArray(selectedCompany.products)) return [];
 
