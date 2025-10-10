@@ -47,7 +47,6 @@ services:
         export DB_PASSWORD=$$(cat /run/secrets/cga_db_password)
         export JWT_SECRET=$$(cat /run/secrets/cga_jwt_secret)
         export DATABASE_URL=\"postgresql://$${DB_USER}:$${DB_PASSWORD}@$${DB_HOST}:5432/$${DB_NAME}?schema=public\"
-
         echo 'Aguardando o banco de dados...' && sleep 15;
         echo 'Iniciando o backend...' &&
         npm install --include=dev &&
