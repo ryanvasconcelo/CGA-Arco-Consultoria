@@ -70,7 +70,6 @@ services:
         - "traefik.http.services.cga-backend.loadbalancer.server.port=3333"
         - "traefik.docker.network=ProjecontNet"
 
-
   frontend:
     image: node:20-alpine
     working_dir: /app
