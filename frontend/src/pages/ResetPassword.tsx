@@ -7,6 +7,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Lock, Save, Loader2, CheckCircle2 } from 'lucide-react';
+import { api } from '@/lib/api';
 
 export default function ResetPassword() {
     const navigate = useNavigate();
@@ -62,7 +63,7 @@ export default function ResetPassword() {
 
         setIsSubmitting(true);
         try {
-            await axios.post(`http://cga.pktech.ai:3333/api/password/reset/${token}`, {
+            await api.post(`/password/reset/${token}`, {
                 email: formData.email,
                 password: formData.password,
             });

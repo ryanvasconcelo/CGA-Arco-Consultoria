@@ -6,7 +6,7 @@ const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || '/api';
 
 // Instância do Axios para requisições autenticadas (com token JWT)
 const api = axios.create({
-  baseURL: API_BASE_URL
+  baseURL: import.meta.env.VITE_API_BASE_URL,
 });
 
 // Interceptor para adicionar o token JWT a cada requisição

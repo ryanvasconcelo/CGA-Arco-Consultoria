@@ -26,17 +26,17 @@ export default function ForceResetPassword() {
         const storedToken = sessionStorage.getItem('@CGA:tempToken');
         const storedPassword = sessionStorage.getItem('@CGA:tempPassword');
         const storedEmail = sessionStorage.getItem('@CGA:userEmail');
-        
+
         console.log('🔍 Debug - Token recuperado:', storedToken);
         console.log('🔍 Debug - Senha recuperada:', storedPassword ? '***' : 'null');
         console.log('🔍 Debug - Email recuperado:', storedEmail);
-        
+
         if (!storedToken || !storedPassword || !storedEmail) {
             console.log('❌ Dados não encontrados, redirecionando para login');
             navigate('/login');
             return;
         }
-        
+
         setTempToken(storedToken);
         setTempPassword(storedPassword);
         setUserEmail(storedEmail);
@@ -83,7 +83,7 @@ export default function ForceResetPassword() {
 
             // Cria uma instância axios temporária com o token
             const apiWithToken = axios.create({
-                baseURL: 'http://cga.pktech.ai:3333/api',
+                baseURL: import.meta.env.VITE_API_BASE_URL,
                 headers: {
                     'Authorization': `Bearer ${tempToken}`,
                     'Content-Type': 'application/json'
@@ -99,11 +99,11 @@ export default function ForceResetPassword() {
             console.log('✅ Resposta do servidor:', response.data);
 
             toast.success('Senha alterada com sucesso! Por favor, faça login com sua nova senha.');
-            
+
             // Limpa as credenciais temporárias
             sessionStorage.removeItem('@CGA:tempToken');
             sessionStorage.removeItem('@CGA:tempPassword');
-            
+
             // Redireciona para o login após 2 segundos
             setTimeout(() => {
                 navigate('/login');

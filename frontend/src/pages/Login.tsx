@@ -12,6 +12,7 @@ import { useAutoAnimate } from '@formkit/auto-animate/react';
 import { ForgotPasswordModal } from "@/components/ForgotPasswordModal";
 import { toast } from "sonner";
 import axios from "axios";
+import { api } from "@/lib/api";
 
 // Import service logos
 import acciaLogo from "@/assets/accia-logo.png";
@@ -165,7 +166,7 @@ export default function Login() {
 
   const handleForgotPassword = async (email: string) => {
     try {
-      await axios.post('http://cga.pktech.ai:3333/api/password/forgot', { email });
+      await api.post('/password/forgot', { email });
       toast.success('Email enviado!', {
         description: 'Se o email existir no sistema, você receberá um link para redefinir sua senha.',
       });
@@ -309,7 +310,7 @@ export default function Login() {
                   backgroundImage: "url('https://copilot.microsoft.com/th/id/BCO.f82a0515-c060-4a4f-ab80-8976deaf4d78.png')",
                   backgroundPosition: "bottom right",
                   backgroundSize: "cover",
-                  
+
                 }}
               ></div>
               <div className="space-y-6">
