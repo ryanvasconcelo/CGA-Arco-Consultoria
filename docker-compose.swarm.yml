@@ -48,7 +48,7 @@ services:
       SMTP_PASS: "xxna ywzv yaxw cfko"  # <-- Para maior segurança no futuro, considere usar um Docker Secret aqui
       SMTP_FROM_NAME: "CGA - Sistema de Gestão"
       SMTP_FROM_EMAIL: "noreply@cga.pktech.ai"
-
+      FRONTEND_URL: "https://cga.pktech.ai"
     command: >
       sh -c "
         export DB_USER=$$(cat /run/secrets/cga_db_user)
