@@ -1,4 +1,4 @@
-// backend/src/controllers/UserController.ts
+// backend/src/controllers/UserController.ts - CORRIGIDO
 import { Request, Response } from 'express';
 import { PrismaClient, Prisma } from '@prisma/client';
 import bcrypt from 'bcryptjs';
@@ -9,7 +9,6 @@ import emailService from '../services/emailService';
 const prisma = new PrismaClient();
 
 class UserController {
-    // backend/src/controllers/UserController.ts
     public async index(req: Request, res: Response): Promise<Response> {
         const { page = '1', pageSize = '10', searchTerm, companyId } = req.query;
         const pageNumber = parseInt(page as string, 10);
@@ -17,20 +16,16 @@ class UserController {
 
         const authenticatedUser = req.user;
 
-        // Constrói a cláusula 'where' dinamicamente
         const whereClause: Prisma.UserWhereInput = {};
 
-        // REGRA: ADMIN só pode ver usuários da sua própria empresa.
         if (authenticatedUser?.role === 'ADMIN') {
             whereClause.companyId = authenticatedUser.companyId;
         }
 
-        // Adiciona filtro por companyId se fornecido na query (para SUPER_ADMIN ou para o modal)
         if (companyId && typeof companyId === 'string') {
             whereClause.companyId = companyId;
         }
 
-        // Adiciona filtro de busca se o searchTerm for fornecido
         if (searchTerm && typeof searchTerm === 'string') {
             whereClause.OR = [
                 { name: { contains: searchTerm, mode: 'insensitive' } },
@@ -46,8 +41,8 @@ class UserController {
                     take: size,
                     orderBy: { name: 'asc' },
                     include: {
-                        company: true, // Inclui os dados da empresa
-                        userProducts: { // Inclui os produtos associados ao usuário
+                        company: true,
+                        userProducts: {
                             include: {
                                 companyProduct: {
                                     include: {
@@ -56,9 +51,9 @@ class UserController {
                                 }
                             }
                         },
-                        permissions: { // Inclui as permissões granulares do usuário
+                        permissions: {
                             include: {
-                                permission: true // E os detalhes de cada permissão
+                                permission: true
                             }
                         }
                     }
@@ -66,7 +61,6 @@ class UserController {
                 prisma.user.count({ where: whereClause })
             ]);
 
-            // Remove a senha de todos os usuários antes de enviar
             const usersWithoutPassword = users.map(({ password, ...user }) => user);
 
             return res.json({ data: usersWithoutPassword, totalCount });
@@ -76,8 +70,6 @@ class UserController {
         }
     }
 
-    // backend/src/controllers/UserController.ts
-
     public async create(req: Request, res: Response): Promise<Response> {
         const {
             name, email, role, companyId, status,
@@ -85,15 +77,14 @@ class UserController {
             arcoPortusPermissions
         } = req.body;
 
+        const authenticatedUser = req.user;
+
         try {
-            // Gera senha temporária segura
             const temporaryPassword = generateTemporaryPassword();
             const hashedPassword = await bcrypt.hash(temporaryPassword, 10);
 
-            // --- VERIFICAÇÃO/CORREÇÃO DAS PERMISSÕES ---
             const permissionsToConnect: { id: string }[] = [];
-            // ATENÇÃO: COLOQUE O ID REAL DO SEU PRODUTO "Arco Portus" AQUI!
-            const arcoPortusId = "6f23e9ed-fb73-40b2-8503-d162b912ee87"; // Use o Prisma Studio para pegar o ID correto
+            const arcoPortusId = "6f23e9ed-fb73-40b2-8503-d162b912ee87";
 
             if (Array.isArray(services) && services.includes(arcoPortusId) && arcoPortusPermissions) {
                 const permissionMap: { [key: string]: { action: string, subject: string } } = {
@@ -119,14 +110,11 @@ class UserController {
                 }
             }
 
-            // --- SINTAXE CORRIGIDA PARA SALVAR OS SERVIÇOS ---
             const user = await prisma.user.create({
                 data: {
                     name, email, password: hashedPassword, role, status,
                     company: { connect: { id: companyId } },
                     passwordResetRequired: true,
-
-                    // Conecta os serviços na tabela UserProduct
                     userProducts: {
                         create: (services as string[] || []).map(productId => ({
                             companyProduct: {
@@ -139,7 +127,6 @@ class UserController {
                             }
                         }))
                     },
-                    // Conecta as permissões granulares na tabela UserPermission
                     permissions: {
                         create: permissionsToConnect.map(p => ({
                             permission: { connect: { id: p.id } }
@@ -148,18 +135,17 @@ class UserController {
                 },
             });
 
-            // Cria log de auditoria
-            const authenticatedUser = req.user;
+            // ✅ CORREÇÃO: Usar authenticatedUser.id em vez de .sub
             console.log('📝 [CREATE_USER] Criando log de auditoria...');
             console.log('👤 [CREATE_USER] Authenticated User:', authenticatedUser);
-            console.log('🆔 [CREATE_USER] Author ID:', authenticatedUser?.sub);
+            console.log('🆔 [CREATE_USER] Author ID:', authenticatedUser?.id); // ✅ MUDANÇA AQUI
             console.log('🏢 [CREATE_USER] Company ID:', companyId);
             console.log('👥 [CREATE_USER] Target User:', name);
 
             if (authenticatedUser) {
                 await createAuditLog({
                     action: 'CREATE_USER',
-                    authorId: authenticatedUser.sub,
+                    authorId: authenticatedUser.id, // ✅ Usar .id (do banco), não .sub (do JWT)
                     companyId: companyId,
                     details: {
                         message: `Usuário ${name} foi criado`,
@@ -170,16 +156,14 @@ class UserController {
                 });
                 console.log('✅ [CREATE_USER] Log de auditoria criado com sucesso');
             } else {
-                console.log('⚠️ [CREATE_USER] authenticatedUser é null/undefined - log não será criado');
+                console.warn('⚠️ [CREATE_USER] authenticatedUser é null/undefined');
             }
 
-            // Envia email com senha temporária
             try {
                 await emailService.sendTemporaryPassword(email, name, temporaryPassword);
                 console.log(`✅ Email de senha temporária enviado para ${email}`);
             } catch (emailError) {
                 console.error('❌ Erro ao enviar email, mas usuário foi criado:', emailError);
-                // Não falha a criação do usuário se o email falhar
             }
 
             const { password, ...userWithoutPassword } = user;
@@ -197,9 +181,7 @@ class UserController {
         const authenticatedUser = req.user;
 
         try {
-            // --- CLÁUSULA DE GUARDA ADICIONADA AQUI ---
             if (!authenticatedUser) {
-                // Se não houver um usuário autenticado, não há por que continuar.
                 return res.status(401).json({ error: 'Ação não autorizada.' });
             }
 
@@ -209,18 +191,14 @@ class UserController {
                 return res.status(404).json({ error: 'Usuário a ser atualizado não encontrado.' });
             }
 
-            // A partir daqui, o TypeScript sabe que authenticatedUser existe.
             if (authenticatedUser.role === 'ADMIN' && userToUpdate.companyId !== authenticatedUser.companyId) {
                 return res.status(403).json({ error: 'Acesso negado. Você só pode editar usuários da sua empresa.' });
             }
 
-
-            // Regra de Negócio: Um ADMIN não pode promover outro usuário para SUPER_ADMIN.
             if (authenticatedUser.role === 'ADMIN' && role === 'SUPER_ADMIN') {
                 return res.status(403).json({ error: 'Acesso negado. Apenas Super Admins podem definir este papel.' });
             }
 
-            // --- LÓGICA DE ATUALIZAÇÃO DE PERMISSÕES GRANULARES (Arco Portus) ---
             const permissionsToConnect: { id: string }[] = [];
             if (arcoPortusPermissions) {
                 const permissionMap: { [key: string]: { action: string, subject: string } } = {
@@ -236,24 +214,19 @@ class UserController {
                     canViewCFTV: { action: 'VIEW', subject: 'CFTV' },
                 };
 
-                // Itera sobre as permissões recebidas do frontend
                 for (const key in arcoPortusPermissions) {
-                    // Se a permissão estiver marcada como `true` e existir no nosso mapa
                     if (arcoPortusPermissions[key] === true && permissionMap[key]) {
-                        // Busca o ID da permissão no banco de dados
                         const perm = await prisma.permission.findUnique({ where: { action_subject: permissionMap[key] } });
                         if (perm) {
-                            // Adiciona o ID à lista de permissões para conectar ao usuário
                             permissionsToConnect.push({ id: perm.id });
                         }
                     }
                 }
             }
 
-            // Busca os CompanyProducts que conectam a empresa aos serviços selecionados
             const companyProducts = await prisma.companyProduct.findMany({
                 where: {
-                    companyId: userToUpdate.companyId, // Usa a companyId do usuário que está sendo editado
+                    companyId: userToUpdate.companyId,
                     productId: { in: services || [] }
                 }
             });
@@ -265,17 +238,15 @@ class UserController {
                     email,
                     role,
                     status,
-                    // Lógica de atualização dos serviços: apaga os antigos, cria os novos
                     userProducts: {
-                        deleteMany: {}, // Apaga todas as associações de serviço existentes para este usuário
-                        create: companyProducts.map(cp => ({ // Cria as novas associações
+                        deleteMany: {},
+                        create: companyProducts.map(cp => ({
                             companyProduct: { connect: { id: cp.id } }
                         }))
                     },
-                    // Lógica de atualização das permissões granulares
                     permissions: {
-                        deleteMany: {}, // Apaga todas as permissões antigas do usuário
-                        create: permissionsToConnect.map(p => ({ // Cria as novas
+                        deleteMany: {},
+                        create: permissionsToConnect.map(p => ({
                             permission: { connect: { id: p.id } }
                         }))
                     }
@@ -283,19 +254,23 @@ class UserController {
                 include: {
                     company: true,
                     userProducts: true,
-                    permissions: { include: { permission: true } } // Inclui as permissões para retornar ao frontend
+                    permissions: { include: { permission: true } }
                 },
             });
 
-            // Cria log de auditoria
+            // ✅ CORREÇÃO: Usar authenticatedUser.id
+            console.log('📝 [UPDATE_USER] Criando log de auditoria...');
+            console.log('🆔 [UPDATE_USER] Author ID:', authenticatedUser.id);
+
             await createAuditLog({
                 action: 'UPDATE_USER',
-                authorId: authenticatedUser.sub,
+                authorId: authenticatedUser.id, // ✅ CORREÇÃO: .id em vez de .sub
                 companyId: userToUpdate.companyId,
                 details: {
                     message: `Usuário ${name} foi atualizado`,
                     targetUser: name,
                     targetUserEmail: email,
+                    targetUserRole: role,
                     changes: { name, email, role, status },
                 },
             });
@@ -325,7 +300,7 @@ class UserController {
         }
 
         try {
-            const user = await prisma.user.findUnique({ where: { id: authenticatedUser.sub } });
+            const user = await prisma.user.findUnique({ where: { id: authenticatedUser.id } }); // ✅ CORREÇÃO
 
             if (!user) {
                 return res.status(404).json({ error: 'Usuário não encontrado.' });
@@ -347,10 +322,10 @@ class UserController {
                 },
             });
 
-            // Cria log de auditoria
+            // ✅ CORREÇÃO: Usar authenticatedUser.id
             await createAuditLog({
                 action: 'CHANGE_PASSWORD',
-                authorId: authenticatedUser.sub,
+                authorId: authenticatedUser.id, // ✅ CORREÇÃO
                 companyId: user.companyId,
                 details: {
                     message: `${user.name} alterou sua senha`,
@@ -361,7 +336,7 @@ class UserController {
             return res.status(200).json({ message: 'Senha alterada com sucesso.' });
 
         } catch (error) {
-            console.error(`Erro no UserController ao alterar a senha do usuário ${authenticatedUser.sub}:`, error);
+            console.error(`Erro ao alterar senha:`, error);
             return res.status(500).json({ error: "Falha ao alterar a senha." });
         }
     }
@@ -370,38 +345,39 @@ class UserController {
         const { id } = req.params;
         const authenticatedUser = req.user;
 
-        // Regra de Negócio: Um usuário não pode se auto-deletar.
-        if (authenticatedUser?.sub === id) {
+        if (authenticatedUser?.id === id) { // ✅ CORREÇÃO: .id em vez de .sub
             return res.status(403).json({ error: 'Ação proibida. Você não pode remover seu próprio usuário.' });
         }
 
         try {
-            // Busca o usuário antes de deletar para ter os dados para o log
             const userToDelete = await prisma.user.findUnique({
                 where: { id },
-                select: { name: true, email: true, companyId: true, role: true }, // <-- CORREÇÃO: Buscar o 'role' do usuário-alvo
+                select: { name: true, email: true, companyId: true, role: true },
             });
 
             if (!userToDelete) {
                 return res.status(404).json({ error: 'Usuário não encontrado.' });
             }
 
-            // Graças ao 'onDelete: Cascade' no schema, o Prisma deletará o usuário e todos os dados dependentes.
             await prisma.user.delete({ where: { id } });
 
-            // Cria log de auditoria
+            // ✅ CORREÇÃO: Usar authenticatedUser.id
             if (authenticatedUser && userToDelete.companyId) {
+                console.log('📝 [DELETE_USER] Criando log de auditoria...');
+                console.log('🆔 [DELETE_USER] Author ID:', authenticatedUser.id);
+
                 await createAuditLog({
                     action: 'DELETE_USER',
-                    authorId: authenticatedUser.sub,
+                    authorId: authenticatedUser.id, // ✅ CORREÇÃO
                     companyId: userToDelete.companyId,
                     details: {
                         message: `Usuário ${userToDelete.name} foi removido`,
                         targetUser: userToDelete.name,
                         targetUserEmail: userToDelete.email,
-                        targetUserRole: userToDelete.role, // <-- CORREÇÃO: Adicionar o 'role' aos detalhes do log
+                        targetUserRole: userToDelete.role,
                     },
                 });
+                console.log('✅ [DELETE_USER] Log criado com sucesso');
             }
 
             return res.status(204).send();
@@ -410,7 +386,6 @@ class UserController {
             return res.status(500).json({ error: 'Falha ao remover usuário.' });
         }
     }
-
 }
 
 export default new UserController();

@@ -36,7 +36,7 @@ const solutions = [
     title: "Arcomoki",
     titleImage: arcomokiLogo,
     description: "Solução para Criação de Formulários Eletrônicos Personalizados",
-    link: "https://moki.app/pt/login"
+    link: "https://spa.checklistfacil.com.br/login?lang=pt-br&thisDomain=checklistfacil.com&referringDomain=google.com&referrerDoesNotExist=false&utm_source=google&utm_medium=organic&utm_campaign=(not%20set)&utm_content=(not%20set)&utm_term=(not%20provided)&gclid=(not%20set)&dclid=(not%20set)&_gl=1*11cmhys*_gcl_aw*R0NMLjE3NjAyMTc0MzUuQ2owS0NRandnS2pIQmhDaEFSSXNBUEpSM3hkVGtabFplb3FWOVlST3Zzb2NjcWtGUkdkWHVXRzJ5RzVJUnl2N3NJRWl5RDhGOVFra0dkVWFBcXdnRUFMd193Y0I.*_gcl_au*MTAwMTczODI0NC4xNzYwMjE3Mzk5*_ga*ODgxNDU2MjQxLjE3NTA1MzAzODU.*_ga_68FP3MXMJL*czE3NjAyMTczOTgkbzIkZzEkdDE3NjAyMTc0NDkkajkkbDAkaDA"
   },
   {
     title: "Unicasp",
@@ -77,7 +77,7 @@ const SolutionsGrid = () => {
                 Gestão Unificada das Soluções
               </h2>
               <p className="text-corporate text-lg mb-0">
-                <span className="text-primary font-semibold">Segurança, Serviços e Treinamentos</span>
+                <span className="text-primary font-semibold">Segurança, Soluções Tecnológicas e Treinamento</span>
               </p>
             </div>
 

@@ -1,14 +1,17 @@
-// backend/src/types/express.d.ts
+// backend/src/types/express.d.ts - VERSÃO CORRIGIDA
 
 import { Role } from '@prisma/client';
 
 declare global {
     namespace Express {
-        export interface Request {
+        interface Request {
             user?: {
-                sub: string; // 'sub' é o padrão para 'subject' (ID do usuário) no JWT
-                role: Role;
-                companyId: string;
+                id: string;       // ✅ ADICIONADO - ID do usuário do banco
+                sub: string;      // Mantido para compatibilidade com JWT
+                name: string;     // ✅ ADICIONADO - Nome do usuário
+                email: string;    // ✅ ADICIONADO - Email do usuário
+                role: Role;       // Role do usuário
+                companyId: string; // ID da empresa
             };
         }
     }

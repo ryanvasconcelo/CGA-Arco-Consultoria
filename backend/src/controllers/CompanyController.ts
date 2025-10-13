@@ -1,4 +1,4 @@
-// backend/src/controllers/CompanyController.ts
+// backend/src/controllers/CompanyController.ts - CORRIGIDO
 import { Request, Response } from 'express';
 import { Prisma, PrismaClient } from '@prisma/client';
 import { uploadLogo } from '../middleware/upload';
@@ -7,7 +7,6 @@ import { createAuditLog } from '../helpers/auditLogger';
 const prisma = new PrismaClient();
 
 class CompanyController {
-    // Listar todas as empresas (só para SUPER_ADMIN)
     public async index(req: Request, res: Response): Promise<Response> {
         const { page = '1', pageSize = '10' } = req.query;
         const pageNumber = parseInt(page as string, 10);
@@ -27,7 +26,6 @@ class CompanyController {
                 take: size,
                 orderBy: { name: 'asc' },
                 select: {
-                    // Seleciona os campos que o frontend precisa
                     id: true,
                     name: true,
                     cnpj: true,
@@ -35,13 +33,11 @@ class CompanyController {
                     createdAt: true,
                     updatedAt: true,
                     products: {
-                        // Inclui a relação com os produtos
                         include: {
-                            product: true // E os detalhes de cada produto
+                            product: true
                         }
                     },
                     _count: {
-                        // Conta quantos usuários a empresa tem
                         select: { users: true }
                     }
                 }
@@ -57,16 +53,12 @@ class CompanyController {
         return res.json({ data: formattedCompanies, totalCount });
     }
 
-    // Criar uma nova empresa (só para SUPER_ADMIN)
-    // backend/src/controllers/CompanyController.ts
-
-    // No método create, ajuste:
     public async create(req: Request, res: Response): Promise<Response> {
         const { name, cnpj, services } = req.body;
-        const logoUrl = req.file ? `/uploads/logos/${req.file.filename}` : null; // CORREÇÃO
+        const logoUrl = req.file ? `/uploads/logos/${req.file.filename}` : null;
+        const authenticatedUser = req.user;
 
         let serviceIds: string[] = [];
-        // Validação robusta para o campo 'services'
         if (services && typeof services === 'string') {
             try {
                 serviceIds = JSON.parse(services);
@@ -100,12 +92,12 @@ class CompanyController {
                 }
             });
 
-            // Cria log de auditoria
-            const authenticatedUser = req.user;
+            // ✅ CORREÇÃO: Usar authenticatedUser.id
             if (authenticatedUser) {
+                console.log('📝 [CREATE_COMPANY] Author ID:', authenticatedUser.id);
                 await createAuditLog({
                     action: 'CREATE_COMPANY',
-                    authorId: authenticatedUser.sub,
+                    authorId: authenticatedUser.id, // ✅ CORREÇÃO: .id em vez de .sub
                     companyId: company.id,
                     details: {
                         message: `Empresa ${name} foi criada`,
@@ -118,17 +110,15 @@ class CompanyController {
             return res.status(201).json(company);
 
         } catch (error) {
-            console.error("Erro no CompanyController ao criar:", error);
+            console.error("Erro ao criar empresa:", error);
             return res.status(500).json({ error: "Falha ao criar a empresa." });
         }
     }
 
-    // Ver uma empresa específica
     public async show(req: Request, res: Response): Promise<Response> {
         const { id } = req.params;
-        const authenticatedUser = req.user; // Obtido do middleware checkRole
+        const authenticatedUser = req.user;
 
-        // REGRA: ADMIN só pode ver sua própria empresa
         if (!authenticatedUser) {
             return res.status(401).json({ error: 'Usuário não autenticado.' });
         }
@@ -139,9 +129,9 @@ class CompanyController {
         const company = await prisma.company.findUnique({
             where: { id },
             include: {
-                products: { // Inclui a lista de serviços associados
+                products: {
                     include: {
-                        product: true // E os detalhes de cada produto
+                        product: true
                     }
                 }
             }
@@ -152,15 +142,11 @@ class CompanyController {
         return res.json(company);
     }
 
-    // Atualizar uma empresa
     public async update(req: Request, res: Response): Promise<Response> {
         const { id } = req.params;
-        // CORREÇÃO: Garante que req.body existe antes de desestruturar.
-        // Isso previne o erro quando o corpo da requisição está vazio ou malformado.
         const name = req.body?.name;
         const cnpj = req.body?.cnpj;
         const services = req.body?.services;
-
         const logoUrl = req.file ? `/uploads/logos/${req.file.filename}` : undefined;
         const authenticatedUser = req.user;
 
@@ -168,7 +154,6 @@ class CompanyController {
             return res.status(401).json({ error: 'Usuário não autenticado.' });
         }
 
-        // REGRA: ADMIN só pode editar sua própria empresa
         if (authenticatedUser.role === 'ADMIN' && authenticatedUser.companyId !== id) {
             return res.status(403).json({ error: 'Acesso negado. Você só pode editar sua própria empresa.' });
         }
@@ -180,12 +165,9 @@ class CompanyController {
             if (cnpj) dataToUpdate.cnpj = cnpj;
             if (logoUrl) dataToUpdate.logoUrl = logoUrl;
 
-            // REGRA: Apenas SUPER_ADMIN pode editar os serviços
             if (services && authenticatedUser.role === 'SUPER_ADMIN') {
                 const serviceIds = typeof services === 'string' ? JSON.parse(services) : services;
 
-                // --- VALIDAÇÃO ADICIONADA ---
-                // Verifica se todos os IDs de serviço fornecidos existem no banco de dados.
                 const existingProducts = await prisma.product.findMany({
                     where: { id: { in: serviceIds } },
                     select: { id: true }
@@ -195,11 +177,10 @@ class CompanyController {
 
                 if (invalidIds.length > 0) {
                     return res.status(400).json({
-                        error: `Os seguintes IDs de serviço são inválidos ou não existem: ${invalidIds.join(', ')}`
+                        error: `Os seguintes IDs de serviço são inválidos: ${invalidIds.join(', ')}`
                     });
                 }
 
-                // Lógica segura para atualizar serviços
                 const currentProducts = await prisma.companyProduct.findMany({
                     where: { companyId: id },
                     select: { productId: true }
@@ -209,17 +190,17 @@ class CompanyController {
                 const productsToAdd = serviceIds.filter((id: string) => !currentProductIds.includes(id));
                 const productsToRemove = currentProductIds.filter((id: string) => !serviceIds.includes(id));
 
-                // ATENÇÃO: Esta operação pode falhar se um usuário ainda tiver acesso ao produto.
-                // O erro que você viu é o Prisma te protegendo. A solução ideal seria
-                // desassociar os usuários dos produtos antes de desassociar a empresa.
-                // Por enquanto, vamos focar em adicionar e deixar a remoção para um próximo passo se necessário.
-                // A lógica abaixo é a correta, mas depende do schema.
                 if (productsToRemove.length > 0) {
-                    // Antes de deletar a associação Company-Product, precisamos deletar as associações User-Product dependentes.
-                    const companyProductsToDelete = await prisma.companyProduct.findMany({ where: { companyId: id, productId: { in: productsToRemove } } });
+                    const companyProductsToDelete = await prisma.companyProduct.findMany({
+                        where: { companyId: id, productId: { in: productsToRemove } }
+                    });
                     const companyProductIdsToDelete = companyProductsToDelete.map(cp => cp.id);
-                    await prisma.userProduct.deleteMany({ where: { companyProductId: { in: companyProductIdsToDelete } } });
-                    await prisma.companyProduct.deleteMany({ where: { id: { in: companyProductIdsToDelete } } });
+                    await prisma.userProduct.deleteMany({
+                        where: { companyProductId: { in: companyProductIdsToDelete } }
+                    });
+                    await prisma.companyProduct.deleteMany({
+                        where: { id: { in: companyProductIdsToDelete } }
+                    });
                 }
                 if (productsToAdd.length > 0) {
                     await prisma.companyProduct.createMany({
@@ -236,10 +217,11 @@ class CompanyController {
                 }
             });
 
-            // Cria log de auditoria
+            // ✅ CORREÇÃO: Usar authenticatedUser.id
+            console.log('📝 [UPDATE_COMPANY] Author ID:', authenticatedUser.id);
             await createAuditLog({
                 action: 'UPDATE_COMPANY',
-                authorId: authenticatedUser.sub,
+                authorId: authenticatedUser.id, // ✅ CORREÇÃO
                 companyId: id,
                 details: {
                     message: `Empresa ${company.name} foi atualizada`,
@@ -251,28 +233,24 @@ class CompanyController {
             return res.json(company);
 
         } catch (error) {
-            console.error(`Erro no CompanyController ao atualizar empresa ${id}:`, error);
+            console.error(`Erro ao atualizar empresa ${id}:`, error);
             return res.status(500).json({ error: "Falha ao atualizar a empresa." });
         }
     }
 
-    // Deletar uma empresa (só para SUPER_ADMIN)
     public async delete(req: Request, res: Response): Promise<Response> {
         const { id } = req.params;
         const authenticatedUser = req.user;
 
-        // Dupla verificação de segurança, embora a rota já deva ter o middleware.
         if (authenticatedUser?.role !== 'SUPER_ADMIN') {
             return res.status(403).json({ error: 'Acesso negado. Apenas Super Admins podem remover empresas.' });
         }
 
-        // REGRA DE NEGÓCIO: SUPER_ADMIN não pode deletar a própria empresa.
         if (authenticatedUser.companyId === id) {
-            return res.status(403).json({ error: 'Ação proibida. Você não pode remover sua própria empresa do sistema.' });
+            return res.status(403).json({ error: 'Ação proibida. Você não pode remover sua própria empresa.' });
         }
 
         try {
-            // Busca a empresa antes de deletar para ter os dados para o log
             const companyToDelete = await prisma.company.findUnique({
                 where: { id },
                 select: { name: true, cnpj: true },
@@ -282,13 +260,13 @@ class CompanyController {
                 return res.status(404).json({ error: 'Empresa não encontrada.' });
             }
 
-            // Graças ao 'onDelete: Cascade' no schema, o Prisma deletará a empresa e todos os dados dependentes.
             await prisma.company.delete({ where: { id } });
 
-            // Cria log de auditoria
+            // ✅ CORREÇÃO: Usar authenticatedUser.id
+            console.log('📝 [DELETE_COMPANY] Author ID:', authenticatedUser.id);
             await createAuditLog({
                 action: 'DELETE_COMPANY',
-                authorId: authenticatedUser.sub,
+                authorId: authenticatedUser.id, // ✅ CORREÇÃO
                 companyId: id,
                 details: {
                     message: `Empresa ${companyToDelete.name} foi removida`,
@@ -304,7 +282,6 @@ class CompanyController {
         }
     }
 
-    // Associa um serviço a uma empresa (cria um registro na tabela pivot)
     public async associateProduct(req: Request, res: Response): Promise<Response> {
         const { id: companyId } = req.params;
         const { productId } = req.body;
@@ -326,11 +303,11 @@ class CompanyController {
                 prisma.product.findUnique({ where: { id: productId }, select: { name: true } }),
             ]);
 
-            // Cria log de auditoria
+            // ✅ CORREÇÃO: Usar authenticatedUser.id
             if (authenticatedUser) {
                 await createAuditLog({
                     action: 'ASSOCIATE_PRODUCT_TO_COMPANY',
-                    authorId: authenticatedUser.sub,
+                    authorId: authenticatedUser.id, // ✅ CORREÇÃO
                     companyId: companyId,
                     details: {
                         message: `Produto ${product?.name} foi associado à empresa ${company?.name}`,
@@ -347,7 +324,6 @@ class CompanyController {
         }
     }
 
-    // Desassocia um serviço a uma empresa (cria um registro na tabela pivot)
     public async disassociateProduct(req: Request, res: Response): Promise<Response> {
         const { id: companyId, productId } = req.params;
         const authenticatedUser = req.user;
@@ -369,11 +345,11 @@ class CompanyController {
                 where: { id: association.id },
             });
 
-            // Cria log de auditoria
+            // ✅ CORREÇÃO: Usar authenticatedUser.id
             if (authenticatedUser) {
                 await createAuditLog({
                     action: 'DISASSOCIATE_PRODUCT_FROM_COMPANY',
-                    authorId: authenticatedUser.sub,
+                    authorId: authenticatedUser.id, // ✅ CORREÇÃO
                     companyId: companyId,
                     details: {
                         message: `Produto ${association.product.name} foi desassociado da empresa ${association.company.name}`,
@@ -390,7 +366,5 @@ class CompanyController {
         }
     }
 }
-
-
 
 export default new CompanyController();
