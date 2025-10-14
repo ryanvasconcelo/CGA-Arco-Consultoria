@@ -34,12 +34,12 @@ async function startServer() {
       'http://localhost:3000',
       'http://127.0.0.1:5173',
     ];
-    
+
     app.use(cors({
       origin: (origin, callback) => {
         // Permite requisições sem origin (como mobile apps, Postman, etc)
         if (!origin) return callback(null, true);
-        
+
         if (allowedOrigins.includes(origin)) {
           callback(null, true);
         } else {
