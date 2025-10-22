@@ -44,8 +44,13 @@ async function startServer() {
           callback(new Error('Not allowed by CORS'));
         }
       },
-      credentials: true
+      credentials: true,
+      methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],  // ← ADICIONAR
+      allowedHeaders: ['Content-Type', 'Authorization', 'x-internal-api-key']  // ← ADICIONAR
     }));
+
+
+
     app.use(express.json());
     app.use('/uploads', express.static(path.join(__dirname, '../uploads')));
 
