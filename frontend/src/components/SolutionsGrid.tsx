@@ -48,7 +48,7 @@ const solutions = [
     title: "Arco Portus",
     titleImage: arcoPorusLogo,
     description: "Plataforma para Gerenciamento de Operações de Segurança Portuária",
-    link: "/arco-portus"
+    link: "https://arcoportus.pktech.ai"
   }
 ];
 
@@ -160,8 +160,6 @@ const SolutionsGrid = () => {
                 </Card>
               ))}
             </div>
-
-            {/* Dashboards Section */}
 
           </div>
         </div>
