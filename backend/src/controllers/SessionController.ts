@@ -103,7 +103,7 @@ class SessionController {
                 secret,
                 {
                     subject: user.id,
-                    expiresIn: '1d',
+                    expiresIn: '30m',
                 }
             );
 

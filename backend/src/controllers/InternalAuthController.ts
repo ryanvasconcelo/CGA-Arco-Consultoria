@@ -1,6 +1,7 @@
 import { Request, Response } from 'express';
 import { prisma } from '../lib/prisma';
 import bcrypt from 'bcryptjs';
+import jwt from 'jsonwebtoken';
 
 export class InternalAuthController {
     public async handlePortusLogin(req: Request, res: Response): Promise<Response> {
@@ -28,7 +29,7 @@ export class InternalAuthController {
                 return res.status(401).json({ message: 'Invalid credentials' });
             }
 
-            const payload = {
+            const userPayload = {
                 userId: user.id,
                 name: user.name,
                 email: user.email,
@@ -41,7 +42,14 @@ export class InternalAuthController {
                 passwordResetRequired: user.passwordResetRequired,
             };
 
-            return res.status(200).json(payload);
+            // Gera o JWT token usando a secret do Arco Portus
+            const jwtSecret = process.env.ARCO_PORTUS_JWT_SECRET || 'default-secret';
+            const token = jwt.sign(userPayload, jwtSecret, { expiresIn: '7d' });
+
+            return res.status(200).json({
+                token,
+                user: userPayload
+            });
 
         } catch (error) {
             console.error('Error during internal Portus login:', error);

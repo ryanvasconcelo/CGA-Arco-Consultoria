@@ -29,6 +29,7 @@ async function startServer() {
 
     const allowedOrigins = [
       'https://cga.pktech.ai',
+      'https://arcoportus.pktech.ai',
       'http://localhost:5173',
       'http://localhost:3000',
       'http://127.0.0.1:5173',

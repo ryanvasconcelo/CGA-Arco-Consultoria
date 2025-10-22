@@ -93,6 +93,30 @@ const SolutionsGrid = () => {
                 <p className="text-primary text-5xl font-bold">Só lugar!</p>
               </div>
             </div>
+
+            <div className="mt-8">
+              <Card className="corporate-card bg-gradient-to-r from-primary/10 to-primary/5 border-primary/20 hover-lift" onClick={() => navigate('/dashboard')}>
+                <CardContent className="p-5 cursor-pointer">
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <h3 className="flex text-2xl font-bold text-foreground mb-2 gap-2">
+                        <div className="flex items-center justify-center">
+                          <RiFolderChartFill size={24} />
+                        </div>
+                        Dashboards
+                      </h3>
+                      <p className="text-corporate">
+                        Visualização completa de dados e métricas em tempo real
+                      </p>
+                    </div>
+                    <Button className="btn-secondary hover-glow">
+                      Acessar
+                    </Button>
+                  </div>
+                </CardContent>
+              </Card>
+            </div>
+
           </div>
 
           {/* Right Side - Solutions Grid */}
@@ -138,28 +162,7 @@ const SolutionsGrid = () => {
             </div>
 
             {/* Dashboards Section */}
-            <div className="mt-8">
-              <Card className="corporate-card bg-gradient-to-r from-primary/10 to-primary/5 border-primary/20 hover-lift" onClick={() => navigate('/dashboard')}>
-                <CardContent className="p-8 cursor-pointer">
-                  <div className="flex items-center justify-between">
-                    <div>
-                      <h3 className="flex text-2xl font-bold text-foreground mb-2 gap-2">
-                        <div className="flex items-center justify-center">
-                          <RiFolderChartFill size={24} />
-                        </div>
-                        Dashboards
-                      </h3>
-                      <p className="text-corporate">
-                        Visualização completa de dados e métricas em tempo real
-                      </p>
-                    </div>
-                    <Button className="btn-secondary hover-glow">
-                      Acessar
-                    </Button>
-                  </div>
-                </CardContent>
-              </Card>
-            </div>
+
           </div>
         </div>
       </div>

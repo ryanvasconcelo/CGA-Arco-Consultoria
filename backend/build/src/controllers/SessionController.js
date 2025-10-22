@@ -39,7 +39,7 @@ class SessionController {
                     name: user.company.name,
                 },
             }, JWT_SECRET, {
-                expiresIn: '1d',
+                expiresIn: '30m',
             });
             const { password: _, ...userWithoutPassword } = user;
             return response.json({

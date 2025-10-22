@@ -49,6 +49,8 @@ services:
       SMTP_FROM_NAME: "CGA - Sistema de Gestão"
       SMTP_FROM_EMAIL: "noreply@cga.pktech.ai"
       FRONTEND_URL: "https://cga.pktech.ai"
+      INTERNAL_API_KEY: "NDQBFansjdnqfbquwb1237asud1ngjnJAFWJNFjnaisf9283nfjNFnfjqnfbsu91293JNDjNDQWBFUBWjqwufbasjnjncw98124012.1e209eqsjcanjn"
+      ARCO_PORTUS_JWT_SECRET: "bsqysabfbjajetgjasuwndanfqbwQUQWNFubfuqbBYWBFUABASNN1923qbwufbasjb172788asnnUNunubufbwybabsmancvbabybfawjnjsndbdwbbhfbsjn.as"
     command: >
       sh -c "
         export DB_USER=$$(cat /run/secrets/cga_db_user)
