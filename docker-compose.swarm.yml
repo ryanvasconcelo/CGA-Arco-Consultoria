@@ -13,7 +13,7 @@ services:
       - cga_db_user
       - cga_db_password
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U docker || exit 1"]
+      test: ["CMD-SHELL", "pg_isready -U docker -d cga_db || exit 1"] # <-- CORREÇÃO APLICADA AQUI
       interval: 10s
       timeout: 5s
       retries: 5
@@ -45,12 +45,10 @@ services:
       SMTP_PORT: "587"
       SMTP_SECURE: "false"
       SMTP_USER: "pktech.testes@gmail.com"
-      SMTP_PASS: "xxna ywzv yaxw cfko"  # <-- Para maior segurança no futuro, considere usar um Docker Secret aqui
+      SMTP_PASS: "xxna ywzv yaxw cfko"
       SMTP_FROM_NAME: "CGA - Sistema de Gestão"
       SMTP_FROM_EMAIL: "noreply@cga.pktech.ai"
       FRONTEND_URL: "https://cga.pktech.ai"
-      INTERNAL_API_KEY: "NDQBFansjdnqfbquwb1237asud1ngjnJAFWJNFjnaisf9283nfjNFnfjqnfbsu91293JNDjNDQWBFUBWjqwufbasjnjncw98124012.1e209eqsjcanjn"
-      ARCO_PORTUS_JWT_SECRET: "bsqysabfbjajetgjasuwndanfqbwQUQWNFubfuqbBYWBFUABASNN1923qbwufbasjb172788asnnUNunubufbwybabsmancvbabybfawjnjsndbdwbbhfbsjn.as"
     command: >
       sh -c "
         export DB_USER=$$(cat /run/secrets/cga_db_user)
@@ -62,7 +60,6 @@ services:
         npm install --include=dev &&
         npx prisma migrate deploy &&
         npx prisma generate &&
-        npx prisma db seed &&
         npm run build &&
         npm start
       "
