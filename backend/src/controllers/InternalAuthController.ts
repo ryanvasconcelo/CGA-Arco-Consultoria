@@ -17,12 +17,12 @@ export class InternalAuthController {
                 include: {
                     company: true,
                     permissions: { include: { permission: true } },
-                },
-                userProducts: {
-                    include: {
-                        companyProduct: {
-                            include: {
-                                product: true
+                    userProducts: {
+                        include: {
+                            companyProduct: {
+                                include: {
+                                    product: true
+                                }
                             }
                         }
                     }
