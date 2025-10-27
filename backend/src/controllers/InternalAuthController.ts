@@ -18,6 +18,15 @@ export class InternalAuthController {
                     company: true,
                     permissions: { include: { permission: true } },
                 },
+                userProducts: {
+                    include: {
+                        companyProduct: {
+                            include: {
+                                product: true
+                            }
+                        }
+                    }
+                }
             });
 
             if (!user || !user.company) {
@@ -40,11 +49,12 @@ export class InternalAuthController {
                 },
                 permissions: user.permissions.map(p => `${p.permission.action}:${p.permission.subject}`),
                 passwordResetRequired: user.passwordResetRequired,
+                services: user.userProducts.map(up => up.companyProduct.product.name),
             };
 
             // Gera o JWT token usando a secret do Arco Portus
             const jwtSecret = process.env.ARCO_PORTUS_JWT_SECRET || 'default-secret';
-            const token = jwt.sign(userPayload, jwtSecret, { expiresIn: '7d' });
+            const token = jwt.sign(userPayload, jwtSecret, { expiresIn: '30m' });
 
             return res.status(200).json({
                 token,
